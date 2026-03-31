@@ -95,8 +95,8 @@
 </div>
 
 <script>
-    // 🔗 Your Live URL
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbx95lzYcIQ_YqPbVn_F8_URk6cssIy8yvZuGQwWGigz5y42HIbYxSm_E2tSE881pQ1x/exec';
+    // 🔗 Updated with your new Apps Script URL
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbyXVJ9a3PW6dX3OinkK2ntJpKPsX3m3_zo_pD6p-FF6mlbJ6BYytncBlq8qcbYAV9WJ/exec';
     
     function showTab(id) {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -124,8 +124,8 @@
         exportBtn.disabled = true;
 
         try {
-            // 1. Fetch RAW data (bypassing cache)
-            const res = await fetch(scriptURL + "?t=" + new Date().getTime());
+            // STEP 1: Fetch RAW data (with cache buster)
+            const res = await fetch(scriptURL + "?t=" + Date.now());
             const rawData = await res.json();
             
             if (rawData.length <= 1) {
@@ -133,7 +133,7 @@
                 return;
             }
 
-            // 2. Convert Arrays to Objects (So we can use log.Timestamp, log.Store, etc.)
+            // STEP 2: Convert Arrays to Objects using row 0 headers
             const headers = rawData;
             let allLogs = rawData.slice(1).map(row => {
                 let obj = {};
@@ -141,10 +141,10 @@
                 return obj;
             });
 
-            // 3. Sort Chronologically (Exactly as you specified)
+            // STEP 3: Sort Chronologically
             allLogs.sort((a, b) => new Date(a.Timestamp) - new Date(b.Timestamp));
 
-            // 4. Filter for TODAY only
+            // STEP 4: Local Date Filtering
             const today = new Date();
             const todaysLogs = allLogs.filter(log => {
                 if (!log.Timestamp) return false;
@@ -159,7 +159,7 @@
                 return;
             }
 
-            // 5. Group by Store and Time Bucket
+            // STEP 5: Group by Store and Time Bucket
             const storeDataGrouped = {};
             const bucketOrder = ["Before 8 AM", "8 AM - 10 AM", "10 AM - 12 PM", "12 PM - 3 PM", "3 PM - 6 PM", "After 6 PM"];
 
@@ -167,16 +167,17 @@
                 const submitDate = new Date(log.Timestamp);
                 const storeName = log.Store;
                 
+                if (!storeName) return;
                 if (!storeDataGrouped[storeName]) storeDataGrouped[storeName] = {};
 
                 const bucketName = getTimeBucket(submitDate);
                 storeDataGrouped[storeName][bucketName] = {
-                    data: log, // Storing the full object
+                    data: log, // Storing the full mapped object
                     exactTime: submitDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
                 };
             });
 
-            // 6. Draw the UI
+            // STEP 6: Draw the UI
             let htmlOutput = '';
             for (const [store, buckets] of Object.entries(storeDataGrouped)) {
                 htmlOutput += `
