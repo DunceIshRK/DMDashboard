@@ -164,7 +164,7 @@
 </div>
 
 <script>
-    // 🔗 Updated with your fresh, active Apps Script URL
+    // 🔗 Your fresh, active Apps Script URL
     const scriptURL = 'https://script.google.com/macros/s/AKfycbwbyHYq1wGIN_pq_FX0JV_ENvRLgoOKDqTS8JCbfH5GnxZBVjjEu55mIwdkgZ6kXvHA/exec';
     
     let globalAdminPin = ""; 
@@ -178,6 +178,13 @@
         if (hour >= 12 && hour < 15) return "12 PM - 3 PM";
         if (hour >= 15 && hour < 18) return "3 PM - 6 PM";
         return "After 6 PM";
+    };
+
+    const formatValue = (val) => {
+        if (typeof val === 'string' && val.includes('1899-12-29T')) {
+            return val.split('T').split('.'); 
+        }
+        return val;
     };
 
     window.onload = () => { 
@@ -263,20 +270,26 @@
 
             const allRows = globalData.slice(1); 
             
-            // 🛡️ Simplified, native Date parsing
+            // 🛡️ THE BULLETPROOF FILTER (Prints diagnostics to the Console)
+            const targetDateString = targetDateObj.toLocaleDateString();
+            console.log("🎯 DASHBOARD LOOKING FOR:", targetDateString);
+
             const rows = allRows.filter(row => {
                 if (!row) return false;
                 
                 const submitDate = new Date(row);
                 if (isNaN(submitDate.getTime())) return false; 
                 
-                return submitDate.getFullYear() === targetDateObj.getFullYear() &&
-                       submitDate.getMonth() === targetDateObj.getMonth() &&
-                       submitDate.getDate() === targetDateObj.getDate();
+                const submitDateString = submitDate.toLocaleDateString();
+                console.log("📊 Checked Row:", submitDateString, "| Store:", row);
+                
+                return submitDateString === targetDateString;
             });
+            
+            console.log("✅ Total Rows Matched:", rows.length);
 
             if (rows.length === 0) {
-                container.innerHTML = `<div class="empty-state">No metrics submitted for ${targetDateObj.toLocaleDateString()} yet.</div>`;
+                container.innerHTML = `<div class="empty-state">No metrics submitted for ${targetDateString} yet.</div>`;
             } else {
                 
                 const storeDataGrouped = {};
@@ -339,7 +352,7 @@
                 container.innerHTML = htmlOutput;
             }
 
-            document.getElementById('exportTime').innerText = `Viewing Data For: ${targetDateObj.toLocaleDateString()}`;
+            document.getElementById('exportTime').innerText = `Viewing Data For: ${targetDateString}`;
 
             exportBtn.disabled = false;
             exportBtn.innerText = "📸 EXPORT DASHBOARD (PNG)";
