@@ -164,7 +164,7 @@
 </div>
 
 <script>
-    // 🔗 Your fresh, active Apps Script URL
+    // Your verified Apps Script URL
     const scriptURL = 'https://script.google.com/macros/s/AKfycbwbyHYq1wGIN_pq_FX0JV_ENvRLgoOKDqTS8JCbfH5GnxZBVjjEu55mIwdkgZ6kXvHA/exec';
     
     let globalAdminPin = ""; 
@@ -178,13 +178,6 @@
         if (hour >= 12 && hour < 15) return "12 PM - 3 PM";
         if (hour >= 15 && hour < 18) return "3 PM - 6 PM";
         return "After 6 PM";
-    };
-
-    const formatValue = (val) => {
-        if (typeof val === 'string' && val.includes('1899-12-29T')) {
-            return val.split('T').split('.'); 
-        }
-        return val;
     };
 
     window.onload = () => { 
@@ -237,7 +230,9 @@
         exportBtn.style.opacity = "0.5";
 
         let targetDateObj = new Date(); 
-        let fetchURL = scriptURL + "?view=" + viewMode + "&t=" + new Date().getTime();
+        
+        // Cache buster attached to force browser to get fresh data
+        let fetchURL = scriptURL + "?t=" + new Date().getTime();
         
         if (viewMode === 'admin') {
             adminControls.style.display = 'block';
@@ -246,7 +241,6 @@
             const selectedStr = document.getElementById('historyDateSelect').value;
             const [y, m, d] = selectedStr.split('-');
             targetDateObj = new Date(y, m - 1, d); 
-            fetchURL += `&pin=${encodeURIComponent(globalAdminPin)}`;
         } else {
             adminControls.style.display = 'none';
             title.innerText = "Store Operations Performance";
@@ -260,33 +254,23 @@
             const globalData = await res.json();
             
             if (globalData.error) {
-                isAdminAuthorized = false; 
-                globalAdminPin = "";
-                alert("❌ " + globalData.error);
-                container.innerHTML = '<div class="empty-state" style="color:red;">Access Denied. Incorrect Passcode.</div>';
-                exportBtn.innerText = "❌ EXPORT DISABLED";
+                container.innerHTML = '<div class="empty-state" style="color:red;">Data format error from server.</div>';
                 return; 
             }
 
             const allRows = globalData.slice(1); 
-            
-            // 🛡️ THE BULLETPROOF FILTER (Prints diagnostics to the Console)
             const targetDateString = targetDateObj.toLocaleDateString();
-            console.log("🎯 DASHBOARD LOOKING FOR:", targetDateString);
 
+            // Native, pure Javascript Date Parsing
             const rows = allRows.filter(row => {
-                if (!row) return false;
+                if (!row) return false; // Skip empty rows
                 
                 const submitDate = new Date(row);
-                if (isNaN(submitDate.getTime())) return false; 
+                if (isNaN(submitDate.getTime())) return false; // Skip malformed rows
                 
-                const submitDateString = submitDate.toLocaleDateString();
-                console.log("📊 Checked Row:", submitDateString, "| Store:", row);
-                
-                return submitDateString === targetDateString;
+                // Compare local date strings directly
+                return submitDate.toLocaleDateString() === targetDateString;
             });
-            
-            console.log("✅ Total Rows Matched:", rows.length);
 
             if (rows.length === 0) {
                 container.innerHTML = `<div class="empty-state">No metrics submitted for ${targetDateString} yet.</div>`;
