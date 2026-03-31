@@ -164,7 +164,7 @@
 </div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbw5z7WF14t28vxDtl-8WCRLZdqCpGxfp8KJHsCdUkebTpLWAS4eRtlCiFKOKLb5qVwf/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbwbyHYq1wGIN_pq_FX0JV_ENvRLgoOKDqTS8JCbfH5GnxZBVjjEu55mIwdkgZ6kXvHA/exec';
     
     let globalAdminPin = ""; 
     let isAdminAuthorized = false; 
@@ -267,13 +267,16 @@
                 return; 
             }
 
-            // ==========================================
-            // FRONTEND DATE FILTERING (BULLETPROOF)
-            // ==========================================
             const allRows = globalData.slice(1); 
             const rows = allRows.filter(row => {
                 if (!row) return false;
-                const submitDate = new Date(row.replace(' ', 'T'));
+                
+                // CRASH-PROOF DATE PARSING
+                const rawDateStr = String(row);
+                const submitDate = new Date(rawDateStr.replace(' ', 'T'));
+                
+                if (isNaN(submitDate.getTime())) return false; 
+                
                 return submitDate.getFullYear() === targetDateObj.getFullYear() &&
                        submitDate.getMonth() === targetDateObj.getMonth() &&
                        submitDate.getDate() === targetDateObj.getDate();
@@ -287,7 +290,8 @@
                 const bucketOrder = ["Before 8 AM", "8 AM - 10 AM", "10 AM - 12 PM", "12 PM - 3 PM", "3 PM - 6 PM", "After 6 PM"];
 
                 rows.forEach(row => {
-                    const submitDate = new Date(row.replace(' ', 'T')); 
+                    const rawDateStr = String(row);
+                    const submitDate = new Date(rawDateStr.replace(' ', 'T')); 
                     const storeName = row;
                     
                     if (!storeName) return;
