@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Store Metrics Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root { --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; --success: #166534; --danger: #991b1b; --whatsapp: #075e54; --card-bg: #ffffff; }
+        * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; box-sizing: border-box;}
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: var(--text); }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; position: sticky; top: 0; z-index: 100; background: var(--bg); padding-bottom: 10px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; background: #e2e8f0; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .tab-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+
+        .tab-content { display: none; max-width: 100%; margin: auto; }
+        .tab-content.active { display: block; }
+
+        .section-card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        h3 { margin: 0 0 15px 0; color: var(--primary); font-size: 1rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
+        label { display: block; margin-top: 14px; font-weight: 700; font-size: 0.9rem; color: #475569; }
+        input, select { width: 100%; padding: 14px; margin-top: 6px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 16px; background: #fff; }
+        button#submitBtn { width: 50%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2); display: block; margin: 0 auto; }
+        
+        .export-btn { width: 100%; padding: 16px; background: var(--whatsapp); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 15px; font-size: 1rem; transition: all 0.2s;}
+        #adminControls { display: none; margin-bottom: 20px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        #adminControls select { width: auto; padding: 10px 15px; margin-top: 0; margin-left: 10px; cursor: pointer; font-weight: bold;}
+        
+        #capture-area { padding: 20px; background: var(--bg); border-radius: 15px; width: 100%; }
+        
+        .dashboard-list { display: flex; flex-direction: column; gap: 20px; }
+        
+        .store-row {
+            display: flex;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        @media(min-width: 768px) {
+            .store-row { flex-direction: row; }
+        }
+
+        .store-name-col {
+            background: #f1f5f9;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 150px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        @media(min-width: 768px) {
+            .store-name-col { border-bottom: none; border-right: 1px solid #e2e8f0; }
+        }
+
+        .store-name-col h2 {
+            margin: 0;
+            color: var(--primary);
+            font-family: "SF Mono", "Monaco", monospace;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+        }
+
+        .cards-col {
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .time-card {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 280px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #f8fafc;
+            padding: 12px 15px;
+            font-weight: 800;
+            font-size: 0.95rem;
+            color: #334155;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .exact-time { font-size: 0.75rem; color: #64748b; font-weight: 600; background: #e2e8f0; padding: 3px 8px; border-radius: 6px; }
+
+        .card-body { padding: 15px; display: flex; flex-direction: column; gap: 8px; }
+
+        .metric-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; border-bottom: 1px dashed #f1f5f9; padding-bottom: 4px; }
+        .metric-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .metric-label { color: #64748b; font-weight: 600; }
+        .metric-value { color: #0f172a; font-weight: 800; font-family: "SF Mono", "Monaco", monospace; }
+
+        .empty-state { text-align: center; padding: 40px; color: #64748b; font-weight: 600; width: 100%; }
+
+    </style>
+</head>
+<body>
+
+<div class="tabs">
+    <button class="tab-btn active" id="btn-form" onclick="showTab('form')">ENTRY FORM</button>
+    <button class="tab-btn" id="btn-today" onclick="showTab('db', 'today')">TODAY'S DASHBOARD</button>
+    <button class="tab-btn" id="btn-admin" style="background-color: #f1f5f9; color: var(--danger);" onclick="checkAccessAndShow()">🔒 HISTORICAL (ADMIN)</button>
+</div>
+
+<div id="form" class="tab-content active">
+    <form id="storeForm">
+        <div class="section-card">
+            <h3>Store Selection</h3>
+            <select name="store" required id="storeDropdown">
+                <option value="">-- Choose Store --</option>
+                <option>TM6N</option><option>TM4T</option><option>TM6M</option><option>T9W3</option>
+                <option>T9T3</option><option>T9V5</option><option>T3GC</option><option>TM6O</option>
+                <option>T9T7</option><option>TM4Z</option><option>TM3J</option><option>TM5C</option>
+            </select>
+        </div>
+
+        <div class="section-card">
+            <h3>Metrics Update</h3>
+            <label>Total Orders</label><input type="number" name="totalOrders" required>
+            <label>Open Orders</label><input type="number" name="openOrders" required>
+            <label>Cancelled Orders</label><input type="number" name="cancelledOrders" required>
+            <label>FFO (%)</label><input type="text" name="ffo" required>
+            <label>OTI (%)</label><input type="text" name="oti" required>
+            <label>ITR</label><input type="text" name="itr" required>
+            <label>OTD (%)</label><input type="text" name="otd" required>
+        </div>
+
+        <button type="submit" id="submitBtn">SUBMIT METRICS</button>
+    </form>
+</div> 
+
+<div id="db" class="tab-content">
+    
+    <div id="adminControls">
+        <label style="margin-top:0; display:inline-block; font-size: 1rem; color: var(--danger);"><strong>Select Historical Date:</strong></label>
+        <select id="historyDateSelect" onchange="loadDashboard('admin')"></select>
+    </div>
+
+    <button id="exportBtn" class="export-btn" onclick="exportDashboard()">📸 EXPORT DASHBOARD (PNG)</button>
+    
+    <div id="capture-area">
+        <h1 id="reportTitle" style="margin: 0 0 5px 0; color: #1e293b; font-size: 1.6rem;">Store Operations Performance</h1>
+        <p style="margin-top: 0; color: #64748b; font-weight: 600; margin-bottom: 25px;">Time-Bound Metrics Tracker</p>
+        
+        <div id="masterBody" class="dashboard-list"></div>
+        
+        <p id="exportTime" style="font-size: 12px; color:#94a3b8; margin-top: 20px; font-weight: bold;"></p>
+    </div>
+</div>
+
+<script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbw5z7WF14t28vxDtl-8WCRLZdqCpGxfp8KJHsCdUkebTpLWAS4eRtlCiFKOKLb5qVwf/exec';
+    
+    let globalAdminPin = ""; 
+    let isAdminAuthorized = false; 
+    
+    const getTimeBucket = (dateObj) => {
+        const hour = dateObj.getHours();
+        if (hour < 8) return "Before 8 AM";
+        if (hour >= 8 && hour < 10) return "8 AM - 10 AM";
+        if (hour >= 10 && hour < 12) return "10 AM - 12 PM";
+        if (hour >= 12 && hour < 15) return "12 PM - 3 PM";
+        if (hour >= 15 && hour < 18) return "3 PM - 6 PM";
+        return "After 6 PM";
+    };
+
+    const formatValue = (val) => {
+        if (typeof val === 'string' && val.includes('1899-12-29T')) {
+            return val.split('T').split('.'); 
+        }
+        return val;
+    };
+
+    window.onload = () => { 
+        const select = document.getElementById('historyDateSelect');
+        for (let i = 1; i <= 30; i++) {
+            let d = new Date();
+            d.setDate(d.getDate() - i);
+            let mm = String(d.getMonth() + 1).padStart(2, '0');
+            let dd = String(d.getDate()).padStart(2, '0');
+            let opt = document.createElement('option');
+            opt.value = `${d.getFullYear()}-${mm}-${dd}`; 
+            opt.text = d.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+            select.appendChild(opt);
+        }
+    };
+
+    function checkAccessAndShow() {
+        if (!isAdminAuthorized) {
+            const passcode = prompt("Enter Admin Passcode for Historical Data:");
+            if (passcode) { 
+                globalAdminPin = passcode;
+                isAdminAuthorized = true; 
+                showTab('db', 'admin');
+            }
+        } else {
+            showTab('db', 'admin');
+        }
+    }
+
+    function showTab(id, viewMode = 'today') {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        
+        if (id === 'form') document.getElementById('btn-form').classList.add('active');
+        if (id === 'db' && viewMode === 'today') document.getElementById('btn-today').classList.add('active');
+        if (id === 'db' && viewMode === 'admin') document.getElementById('btn-admin').classList.add('active');
+
+        if(id === 'db') loadDashboard(viewMode);
+    }
+
+    async function loadDashboard(viewMode) {
+        const container = document.getElementById('masterBody');
+        const title = document.getElementById('reportTitle');
+        const adminControls = document.getElementById('adminControls');
+        const exportBtn = document.getElementById('exportBtn');
+
+        exportBtn.disabled = true;
+        exportBtn.innerText = "⏳ LOADING DATA...";
+        exportBtn.style.opacity = "0.5";
+
+        let targetDateObj = new Date(); 
+        let fetchURL = scriptURL + "?view=" + viewMode + "&t=" + new Date().getTime();
+        
+        if (viewMode === 'admin') {
+            adminControls.style.display = 'block';
+            title.innerText = "🔒 Historical Operations Performance";
+            title.style.color = "var(--danger)";
+            const selectedStr = document.getElementById('historyDateSelect').value;
+            const [y, m, d] = selectedStr.split('-');
+            targetDateObj = new Date(y, m - 1, d); 
+            fetchURL += `&pin=${encodeURIComponent(globalAdminPin)}`;
+        } else {
+            adminControls.style.display = 'none';
+            title.innerText = "Store Operations Performance";
+            title.style.color = "#1e293b";
+        }
+
+        container.innerHTML = '<div class="empty-state">Loading dashboard data...</div>';
+        
+        try {
+            const res = await fetch(fetchURL);
+            const globalData = await res.json();
+            
+            if (globalData.error) {
+                isAdminAuthorized = false; 
+                globalAdminPin = "";
+                alert("❌ " + globalData.error);
+                container.innerHTML = '<div class="empty-state" style="color:red;">Access Denied. Incorrect Passcode.</div>';
+                exportBtn.innerText = "❌ EXPORT DISABLED";
+                return; 
+            }
+
+            // ==========================================
+            // FRONTEND DATE FILTERING (BULLETPROOF)
+            // ==========================================
+            const allRows = globalData.slice(1); 
+            const rows = allRows.filter(row => {
+                if (!row) return false;
+                const submitDate = new Date(row.replace(' ', 'T'));
+                return submitDate.getFullYear() === targetDateObj.getFullYear() &&
+                       submitDate.getMonth() === targetDateObj.getMonth() &&
+                       submitDate.getDate() === targetDateObj.getDate();
+            });
+
+            if (rows.length === 0) {
+                container.innerHTML = `<div class="empty-state">No metrics submitted for ${targetDateObj.toLocaleDateString()} yet.</div>`;
+            } else {
+                
+                const storeDataGrouped = {};
+                const bucketOrder = ["Before 8 AM", "8 AM - 10 AM", "10 AM - 12 PM", "12 PM - 3 PM", "3 PM - 6 PM", "After 6 PM"];
+
+                rows.forEach(row => {
+                    const submitDate = new Date(row.replace(' ', 'T')); 
+                    const storeName = row;
+                    
+                    if (!storeName) return;
+                    if (!storeDataGrouped[storeName]) storeDataGrouped[storeName] = {};
+
+                    const bucketName = getTimeBucket(submitDate);
+                    storeDataGrouped[storeName][bucketName] = {
+                        data: row,
+                        exactTime: submitDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                    };
+                });
+
+                let htmlOutput = '';
+                
+                for (const [store, buckets] of Object.entries(storeDataGrouped)) {
+                    htmlOutput += `
+                        <div class="store-row">
+                            <div class="store-name-col">
+                                <h2>${store}</h2>
+                            </div>
+                            <div class="cards-col">
+                    `;
+
+                    bucketOrder.forEach(bucketKey => {
+                        if (buckets[bucketKey]) {
+                            const rowData = buckets[bucketKey].data;
+                            const exactTime = buckets[bucketKey].exactTime;
+                            
+                            htmlOutput += `
+                                <div class="time-card">
+                                    <div class="card-header">
+                                        <span>${bucketKey}</span>
+                                        <span class="exact-time">${exactTime}</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="metric-row"><span class="metric-label">Total Orders</span> <span class="metric-value">${formatValue(rowData)}</span></div>
+                                        <div class="metric-row"><span class="metric-label">Open Orders</span> <span class="metric-value">${formatValue(rowData)}</span></div>
+                                        <div class="metric-row"><span class="metric-label">Cancelled</span> <span class="metric-value">${formatValue(rowData)}</span></div>
+                                        <div class="metric-row"><span class="metric-label">FFO</span> <span class="metric-value">${formatValue(rowData)}</span></div>
+                                        <div class="metric-row"><span class="metric-label">OTI</span> <span class="metric-value">${formatValue(rowData)}</span></div>
+                                        <div class="metric-row"><span class="metric-label">ITR</span> <span class="metric-value">${formatValue(rowData)}</span></div>
+                                        <div class="metric-row"><span class="metric-label">OTD</span> <span class="metric-value">${formatValue(rowData)}</span></div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+
+                    htmlOutput += `</div></div>`; 
+                }
+
+                container.innerHTML = htmlOutput;
+            }
+
+            document.getElementById('exportTime').innerText = `Viewing Data For: ${targetDateObj.toLocaleDateString()}`;
+
+            exportBtn.disabled = false;
+            exportBtn.innerText = "📸 EXPORT DASHBOARD (PNG)";
+            exportBtn.style.opacity = "1"; 
+            
+        } catch(e) { 
+            container.innerHTML = '<div class="empty-state" style="color:red;">Connection Error. Verify Apps Script URL.</div>'; 
+            console.error(e);
+            exportBtn.innerText = "❌ ERROR LOADING DATA";
+        }
+    }
+
+    function exportDashboard() {
+        const area = document.getElementById('capture-area');
+        const btn = document.getElementById('exportBtn');
+        
+        btn.innerText = "GENERATING HD IMAGE...";
+        btn.disabled = true;
+        
+        html2canvas(area, {
+            scale: 2, 
+            useCORS: true,
+            backgroundColor: "#f8fafc"
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `Store_Cards_${new Date().toLocaleDateString()}.png`;
+            link.href = canvas.toDataURL("image/png", 1.0);
+            link.click();
+            
+            btn.innerText = "📸 EXPORT DASHBOARD (PNG)";
+            btn.disabled = false;
+        });
+    }
+
+    document.getElementById('storeForm').addEventListener('submit', e => {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.innerText = "Submitting Data..."; 
+        btn.disabled = true;
+        
+        fetch(scriptURL, { method: 'POST', body: new FormData(e.target)})
+            .then(() => { 
+                alert("Submission successful!"); 
+                e.target.reset(); 
+                btn.innerText = "SUBMIT METRICS"; 
+                btn.disabled = false; 
+            })
+            .catch(() => { 
+                alert("Error submitting data!"); 
+                btn.innerText = "SUBMIT METRICS"; 
+                btn.disabled = false; 
+            });
+    });
+</script>
+</body>
+</html>
