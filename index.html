@@ -164,6 +164,7 @@
 </div>
 
 <script>
+    // 🔗 Updated with your fresh, active Apps Script URL
     const scriptURL = 'https://script.google.com/macros/s/AKfycbwbyHYq1wGIN_pq_FX0JV_ENvRLgoOKDqTS8JCbfH5GnxZBVjjEu55mIwdkgZ6kXvHA/exec';
     
     let globalAdminPin = ""; 
@@ -177,13 +178,6 @@
         if (hour >= 12 && hour < 15) return "12 PM - 3 PM";
         if (hour >= 15 && hour < 18) return "3 PM - 6 PM";
         return "After 6 PM";
-    };
-
-    const formatValue = (val) => {
-        if (typeof val === 'string' && val.includes('1899-12-29T')) {
-            return val.split('T').split('.'); 
-        }
-        return val;
     };
 
     window.onload = () => { 
@@ -268,18 +262,12 @@
             }
 
             const allRows = globalData.slice(1); 
+            
+            // 🛡️ Simplified, native Date parsing
             const rows = allRows.filter(row => {
                 if (!row) return false;
                 
-                // FIXED PARSER: Safely read the date without breaking it
-                const rawDateStr = String(row);
-                let submitDate = new Date(rawDateStr);
-                
-                // Fallback just in case a browser really needs the 'T' for an ISO string
-                if (isNaN(submitDate.getTime())) {
-                    submitDate = new Date(rawDateStr.replace(' ', 'T'));
-                }
-                
+                const submitDate = new Date(row);
                 if (isNaN(submitDate.getTime())) return false; 
                 
                 return submitDate.getFullYear() === targetDateObj.getFullYear() &&
@@ -295,15 +283,11 @@
                 const bucketOrder = ["Before 8 AM", "8 AM - 10 AM", "10 AM - 12 PM", "12 PM - 3 PM", "3 PM - 6 PM", "After 6 PM"];
 
                 rows.forEach(row => {
-                    const rawDateStr = String(row);
-                    let submitDate = new Date(rawDateStr);
-                    if (isNaN(submitDate.getTime())) {
-                        submitDate = new Date(rawDateStr.replace(' ', 'T'));
-                    }
-                    
+                    const submitDate = new Date(row);
                     const storeName = row;
                     
-                    if (!storeName) return;
+                    if (!storeName || isNaN(submitDate.getTime())) return;
+                    
                     if (!storeDataGrouped[storeName]) storeDataGrouped[storeName] = {};
 
                     const bucketName = getTimeBucket(submitDate);
@@ -336,13 +320,13 @@
                                         <span class="exact-time">${exactTime}</span>
                                     </div>
                                     <div class="card-body">
-                                        <div class="metric-row"><span class="metric-label">Total Orders</span> <span class="metric-value">${formatValue(rowData)}</span></div>
-                                        <div class="metric-row"><span class="metric-label">Open Orders</span> <span class="metric-value">${formatValue(rowData)}</span></div>
-                                        <div class="metric-row"><span class="metric-label">Cancelled</span> <span class="metric-value">${formatValue(rowData)}</span></div>
-                                        <div class="metric-row"><span class="metric-label">FFO</span> <span class="metric-value">${formatValue(rowData)}</span></div>
-                                        <div class="metric-row"><span class="metric-label">OTI</span> <span class="metric-value">${formatValue(rowData)}</span></div>
-                                        <div class="metric-row"><span class="metric-label">ITR</span> <span class="metric-value">${formatValue(rowData)}</span></div>
-                                        <div class="metric-row"><span class="metric-label">OTD</span> <span class="metric-value">${formatValue(rowData)}</span></div>
+                                        <div class="metric-row"><span class="metric-label">Total Orders</span> <span class="metric-value">${rowData}</span></div>
+                                        <div class="metric-row"><span class="metric-label">Open Orders</span> <span class="metric-value">${rowData}</span></div>
+                                        <div class="metric-row"><span class="metric-label">Cancelled</span> <span class="metric-value">${rowData}</span></div>
+                                        <div class="metric-row"><span class="metric-label">FFO</span> <span class="metric-value">${rowData}</span></div>
+                                        <div class="metric-row"><span class="metric-label">OTI</span> <span class="metric-value">${rowData}</span></div>
+                                        <div class="metric-row"><span class="metric-label">ITR</span> <span class="metric-value">${rowData}</span></div>
+                                        <div class="metric-row"><span class="metric-label">OTD</span> <span class="metric-value">${rowData}</span></div>
                                     </div>
                                 </div>
                             `;
