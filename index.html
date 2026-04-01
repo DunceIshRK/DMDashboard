@@ -1,250 +1,822 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Store Metrics Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; --success: #166534; --danger: #991b1b; --whatsapp: #075e54; --card-bg: #ffffff; }
-        * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; box-sizing: border-box;}
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: var(--text); }
-        
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; position: sticky; top: 0; z-index: 100; background: var(--bg); padding-bottom: 10px; }
-        .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; background: #e2e8f0; font-weight: bold; cursor: pointer; transition: all 0.2s; }
-        .tab-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DM Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Nunito+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .tab-content { display: none; max-width: 100%; margin: auto; }
-        .tab-content.active { display: block; }
+    :root {
+      --coral:     #EF6B5B;
+      --coral-lt:  #F4897C;
+      --coral-dim: #f0d5d1;
+      --cream:     #F2EDE8;
+      --cream-dk:  #E8E2DC;
+      --white:     #FFFFFF;
+      --ink:       #2E2A27;
+      --ink-mid:   #6B6460;
+      --ink-soft:  #A89E99;
+      --good:      #3DBD8A;
+      --bad:       #E05C5C;
+      --border:    #DDD8D3;
+      --shadow:    rgba(80,50,40,0.08);
+      --font:      'Nunito Sans', sans-serif;
+      --display:   'Nunito', sans-serif;
+      --radius:    14px;
+    }
 
-        .section-card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        h3 { margin: 0 0 15px 0; color: var(--primary); font-size: 1rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
-        label { display: block; margin-top: 14px; font-weight: 700; font-size: 0.9rem; color: #475569; }
-        input, select { width: 100%; padding: 14px; margin-top: 6px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 16px; background: #fff; }
-        button#submitBtn { width: 50%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2); display: block; margin: 0 auto; }
-        
-        .export-btn { width: 100%; padding: 16px; background: var(--whatsapp); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 15px; font-size: 1rem; transition: all 0.2s;}
-        
-        #capture-area { padding: 20px; background: var(--bg); border-radius: 15px; width: 100%; }
-        
-        .dashboard-list { display: flex; flex-direction: column; gap: 20px; }
-        
-        .store-row { display: flex; background: var(--card-bg); border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; overflow: hidden; flex-direction: column; }
-        @media(min-width: 768px) { .store-row { flex-direction: row; } }
+    body {
+      font-family: var(--font);
+      background: var(--cream);
+      color: var(--ink);
+      min-height: 100vh;
+    }
 
-        .store-name-col { background: #f1f5f9; padding: 20px; display: flex; align-items: center; justify-content: center; min-width: 150px; border-bottom: 1px solid #e2e8f0; }
-        @media(min-width: 768px) { .store-name-col { border-bottom: none; border-right: 1px solid #e2e8f0; } }
-        .store-name-col h2 { margin: 0; color: var(--primary); font-family: "SF Mono", "Monaco", monospace; font-size: 1.5rem; letter-spacing: 1px; }
+    .shell {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: 100vh;
+    }
 
-        .cards-col { padding: 20px; display: flex; gap: 20px; flex-wrap: wrap; flex: 1; }
-        .time-card { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; width: 100%; max-width: 280px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); overflow: hidden; }
-        .card-header { background: #f8fafc; padding: 12px 15px; font-weight: 800; font-size: 0.95rem; color: #334155; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-        .exact-time { font-size: 0.75rem; color: #64748b; font-weight: 600; background: #e2e8f0; padding: 3px 8px; border-radius: 6px; }
-        .card-body { padding: 15px; display: flex; flex-direction: column; gap: 8px; }
-        .metric-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; border-bottom: 1px dashed #f1f5f9; padding-bottom: 4px; }
-        .metric-row:last-child { border-bottom: none; padding-bottom: 0; }
-        .metric-label { color: #64748b; font-weight: 600; }
-        .metric-value { color: #0f172a; font-weight: 800; font-family: "SF Mono", "Monaco", monospace; }
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: var(--coral);
+      display: flex;
+      flex-direction: column;
+      padding: 32px 20px;
+      position: relative;
+      overflow: hidden;
+    }
 
-        .empty-state { text-align: center; padding: 40px; color: #64748b; font-weight: 600; width: 100%; }
-    </style>
+    .sidebar::before,
+    .sidebar::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      pointer-events: none;
+    }
+    .sidebar::before { width: 160px; height: 160px; top: -40px; left: -40px; }
+    .sidebar::after  { width: 100px; height: 100px; bottom: 60px; right: -30px; }
+
+    .orb-mid {
+      position: absolute;
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.10);
+      bottom: 180px; left: -20px;
+      pointer-events: none;
+    }
+
+    .brand {
+      position: relative;
+      z-index: 1;
+      margin-bottom: 48px;
+    }
+
+    .brand-title {
+      font-family: var(--display);
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.15;
+    }
+
+    .brand-sub {
+      font-size: 12px;
+      color: rgba(255,255,255,0.60);
+      margin-top: 5px;
+    }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.5px;
+      margin-top: 10px;
+    }
+
+    .live-dot {
+      width: 6px; height: 6px;
+      background: #fff;
+      border-radius: 50%;
+      animation: blink 2s infinite;
+    }
+
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: var(--display);
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.65);
+      transition: all 0.18s;
+      border: none;
+      background: transparent;
+      text-align: left;
+      width: 100%;
+    }
+
+    .nav-item:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+    .nav-item.active {
+      background: #fff;
+      color: var(--coral);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+
+    .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+
+    /* ── MAIN ── */
+    .main { display: flex; flex-direction: column; overflow-y: auto; }
+
+    .topbar {
+      padding: 28px 32px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .page-title {
+      font-family: var(--display);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .page-sub { font-size: 13px; color: var(--ink-soft); margin-top: 3px; }
+
+    .content { padding: 24px 32px 48px; flex: 1; }
+
+    /* ── TABS ── */
+    .tab-view { display: none; }
+    .tab-view.show { display: block; animation: fadeUp 0.2s ease; }
+
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(6px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* ── FORM ── */
+    .form-panel {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 24px var(--shadow);
+      overflow: hidden;
+      max-width: 660px;
+    }
+
+    .form-header {
+      background: var(--cream);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 28px;
+    }
+
+    .form-header h2 {
+      font-family: var(--display);
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .form-header p { font-size: 13px; color: var(--ink-soft); margin-top: 3px; }
+
+    .form-body { padding: 24px 28px 8px; }
+
+    .fg { display: grid; gap: 14px; margin-bottom: 18px; }
+    .fg.c1 { grid-template-columns: 1fr; }
+    .fg.c2 { grid-template-columns: 1fr 1fr; }
+    .fg.c3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+
+    .field label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-mid);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .field input,
+    .field select {
+      background: var(--cream);
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      color: var(--ink);
+      font-family: var(--font);
+      font-size: 14px;
+      padding: 10px 13px;
+      width: 100%;
+      outline: none;
+      -webkit-appearance: none;
+      transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: var(--coral);
+      box-shadow: 0 0 0 3px var(--coral-dim);
+      background: #fff;
+    }
+
+    .field input::placeholder { color: var(--ink-soft); }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 6px 0 14px;
+    }
+
+    .divider span {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      color: var(--coral);
+      white-space: nowrap;
+    }
+
+    .divider::before,
+    .divider::after { content:''; flex:1; height:1px; background:var(--border); }
+
+    .form-footer {
+      padding: 4px 28px 24px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn-submit {
+      background: var(--coral);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 13px 36px;
+      font-family: var(--display);
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(239,107,91,0.35);
+      transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
+    }
+
+    .btn-submit:hover {
+      background: var(--coral-lt);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(239,107,91,0.4);
+    }
+
+    .btn-submit:active { transform: translateY(0); }
+
+    /* ── DASHBOARD ── */
+    .slot-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .slot-label {
+      font-family: var(--display);
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .slot-dots { display:flex; gap:5px; align-items:center; }
+
+    .slot-dot {
+      width:7px; height:7px;
+      border-radius:50%;
+      background: var(--border);
+      cursor:pointer;
+      transition: background 0.18s, transform 0.15s;
+    }
+
+    .slot-dot.active { background: var(--coral); transform: scale(1.35); }
+
+    .nav-arrow {
+      width:34px; height:34px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: var(--white);
+      color: var(--ink-mid);
+      font-size: 15px;
+      cursor: pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition: all 0.15s;
+      box-shadow: 0 1px 4px var(--shadow);
+    }
+
+    .nav-arrow:hover:not(:disabled) { border-color:var(--coral); color:var(--coral); }
+    .nav-arrow:disabled { opacity:0.3; cursor:not-allowed; }
+
+    /* KPI */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px,1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .kpi-card {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 16px 18px;
+      box-shadow: 0 2px 10px var(--shadow);
+      border-top: 3px solid var(--coral-dim);
+      transition: transform 0.15s;
+    }
+
+    .kpi-card:hover { transform: translateY(-2px); }
+    .kpi-card.good-card { border-top-color: #b6edd9; }
+    .kpi-card.bad-card  { border-top-color: #f5c4c4; }
+
+    .kpi-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--ink-soft);
+      margin-bottom: 7px;
+    }
+
+    .kpi-val {
+      font-family: var(--display);
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--ink);
+      line-height: 1;
+    }
+
+    .kpi-val.good { color: var(--good); }
+    .kpi-val.bad  { color: var(--bad); }
+
+    /* TABLE */
+    .table-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 12px var(--shadow);
+      overflow: hidden;
+    }
+
+    .table-head-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--cream-dk);
+    }
+
+    .table-head-bar h3 {
+      font-family: var(--display);
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .badge {
+      background: var(--coral-dim);
+      color: var(--coral);
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 20px;
+      padding: 3px 10px;
+    }
+
+    .tscroll { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: var(--cream); }
+
+    th {
+      padding: 10px 14px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--ink-soft);
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    th:first-child { text-align: left; }
+
+    td {
+      padding: 10px 14px;
+      font-size: 13px;
+      text-align: center;
+      color: var(--ink);
+      border-bottom: 1px solid var(--cream-dk);
+      white-space: nowrap;
+    }
+
+    td:first-child { text-align: left; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #faf8f6; }
+
+    .store-chip {
+      display: inline-block;
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-mid);
+    }
+
+    .good { color: var(--good) !important; font-weight: 700; }
+    .bad  { color: var(--bad)  !important; font-weight: 700; }
+    .dim  { color: var(--border) !important; }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 28px; right: 28px;
+      background: var(--ink);
+      color: #fff;
+      padding: 12px 22px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 600;
+      transform: translateY(70px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      z-index: 999;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+    }
+
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    .loading {
+      display:flex; align-items:center; justify-content:center;
+      padding:48px; color:var(--ink-soft); gap:10px; font-size:13px;
+    }
+
+    .spinner {
+      width:16px; height:16px;
+      border:2px solid var(--border);
+      border-top-color:var(--coral);
+      border-radius:50%;
+      animation:spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    @media (max-width: 640px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar {
+        flex-direction: row;
+        padding: 14px 18px;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .sidebar::before,.sidebar::after,.orb-mid { display:none; }
+      .brand { margin-bottom:0; }
+      .brand-sub,.live-pill { display:none; }
+      .brand-title { font-size:17px; line-height:1; }
+      .nav { flex-direction:row; gap:4px; }
+      .nav-icon { display:none; }
+      .nav-item { padding:8px 14px; font-size:13px; }
+      .topbar { padding:16px 16px 0; }
+      .content { padding:16px; }
+      .fg.c2,.fg.c3 { grid-template-columns:1fr 1fr; }
+    }
+  </style>
 </head>
 <body>
 
-<div class="tabs">
-    <button class="tab-btn active" id="btn-form" onclick="showTab('form')">ENTRY FORM</button>
-    <button class="tab-btn" id="btn-today" onclick="showTab('db')">TODAY'S DASHBOARD</button>
-</div>
-
-<div id="form" class="tab-content active">
-    <form id="storeForm">
-        <div class="section-card">
-            <h3>Store Selection</h3>
-            <select name="store" required>
-                <option value="">-- Choose Store --</option>
-                <option>TM6N</option><option>TM4T</option><option>TM6M</option><option>T9W3</option>
-                <option>T9T3</option><option>T9V5</option><option>T3GC</option><option>TM6O</option>
-                <option>T9T7</option><option>TM4Z</option><option>TM3J</option><option>TM5C</option>
-            </select>
-        </div>
-
-        <div class="section-card">
-            <h3>Metrics Update</h3>
-            <label>Total Orders</label><input type="number" name="totalOrders" required>
-            <label>Open Orders</label><input type="number" name="openOrders" required>
-            <label>Cancelled Orders</label><input type="number" name="cancelledOrders" required>
-            <label>FFO (%)</label><input type="text" name="ffo" required>
-            <label>OTI (%)</label><input type="text" name="oti" required>
-            <label>ITR</label><input type="text" name="itr" required>
-            <label>OTD (%)</label><input type="text" name="otd" required>
-        </div>
-
-        <button type="submit" id="submitBtn">SUBMIT METRICS</button>
-    </form>
-</div> 
-
-<div id="db" class="tab-content">
-    <button id="exportBtn" class="export-btn" onclick="exportDashboard()">📸 EXPORT DASHBOARD (PNG)</button>
-    
-    <div id="capture-area">
-        <h1 style="margin: 0 0 5px 0; color: #1e293b; font-size: 1.6rem;">Store Operations Performance</h1>
-        <p style="margin-top: 0; color: #64748b; font-weight: 600; margin-bottom: 25px;">Today's Live Metrics</p>
-        
-        <div id="masterBody" class="dashboard-list"></div>
-        <p id="exportTime" style="font-size: 12px; color:#94a3b8; margin-top: 20px; font-weight: bold;"></p>
+<div class="shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="orb-mid"></div>
+    <div class="brand">
+      <div class="brand-title">DM<br>Dashboard</div>
+      <div class="brand-sub">Operations Dashboard</div>
+      <div class="live-pill"><div class="live-dot"></div> Today's</div>
     </div>
+    <nav class="nav">
+      <button class="nav-item active" onclick="showTab('formTab', this)">
+        <span class="nav-icon">📋</span> FORM
+      </button>
+      <button class="nav-item" onclick="showTab('dashTab', this)">
+        <span class="nav-icon">📊</span> Dashboard
+      </button>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    
+
+    <div class="content">
+
+      <!-- FORM TAB -->
+      <div id="formTab" class="tab-view show">
+        <div class="form-panel">
+          <div class="form-header">
+            <h2>Store Metrics</h2>
+            <p>Fill in the data for your store</p>
+          </div>
+          <form id="mainForm">
+            <div class="form-body">
+
+              <div class="fg c1">
+                <div class="field">
+                  <label>Store</label>
+                  <select id="store" required>
+                    <option value="">Select a store…</option>
+                    <option>TM6N</option><option>TM4T</option><option>TM6M</option>
+                    <option>T9W3</option><option>T9T3</option><option>T9V5</option>
+                    <option>T3GC</option><option>TM6O</option><option>T9T7</option>
+                    <option>TM4Z</option><option>TM3J</option><option>TM5C</option>
+                    <option>TN1B</option><option>TK5T</option><option>TN1T</option>
+                    <option>T9H8</option><option>TM8T</option><option>TN1C</option>
+                    <option>TBAE</option><option>U2JH</option><option>U1WR</option>
+                    <option>U949</option><option>FRVE</option><option>U286</option>
+                    <option>U1WP</option><option>2314</option><option>3035</option>
+                    <option>3087</option><option>F1ZP</option><option>U1L2</option>
+                    <option>U14V</option><option>TNI6</option><option>U086</option>
+                    <option>U1OW</option><option>TKM7</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="divider"><span>Orders</span></div>
+              <div class="fg c3">
+                <div class="field"><label>Total Orders</label><input type="number" id="total_orders" placeholder="0"></div>
+                <div class="field"><label>Open Orders</label><input type="number" id="open_orders" placeholder="0"></div>
+                <div class="field"><label>Cancelled</label><input type="number" id="cancelled_orders" placeholder="0"></div>
+              </div>
+
+              <div class="divider"><span>Fulfilment</span></div>
+              <div class="fg c2">
+                <div class="field"><label>FFO (%)</label><input type="number" id="ffo" placeholder="0.0" step="0.1"></div>
+              </div>
+
+              <div class="divider"><span>OTI — Order to Invoice</span></div>
+              <div class="fg c3">
+                <div class="field"><label>Hours</label><input type="number" id="oti_h" value="0" min="0"></div>
+                <div class="field"><label>Minutes</label><input type="number" id="oti_m" value="0" min="0" max="59"></div>
+                <div class="field"><label>Seconds</label><input type="number" id="oti_s" value="0" min="0" max="59"></div>
+              </div>
+
+              <div class="divider"><span>ITR — Invoice to Rider</span></div>
+              <div class="fg c3">
+                <div class="field"><label>Hours</label><input type="number" id="itr_h" value="0" min="0"></div>
+                <div class="field"><label>Minutes</label><input type="number" id="itr_m" value="0" min="0" max="59"></div>
+                <div class="field"><label>Seconds</label><input type="number" id="itr_s" value="0" min="0" max="59"></div>
+              </div>
+
+              <div class="divider"><span>OTD — Order to Delivery</span></div>
+              <div class="fg c3">
+                <div class="field"><label>Hours</label><input type="number" id="otd_h" value="0" min="0"></div>
+                <div class="field"><label>Minutes</label><input type="number" id="otd_m" value="0" min="0" max="59"></div>
+                <div class="field"><label>Seconds</label><input type="number" id="otd_s" value="0" min="0" max="59"></div>
+              </div>
+
+            </div>
+            <div class="form-footer">
+              <button type="submit" class="btn-submit">Submit Report →</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- DASHBOARD TAB -->
+      <div id="dashTab" class="tab-view">
+
+        <div class="slot-bar">
+          <button class="nav-arrow" id="prevBtn" onclick="prevSlot()">←</button>
+          <span class="slot-label" id="slotLabel">—</span>
+          <div class="slot-dots" id="slotDots"></div>
+          <button class="nav-arrow" id="nextBtn" onclick="nextSlot()">→</button>
+        </div>
+
+        <div class="kpi-row" id="kpiContainer">
+          <div class="loading"><div class="spinner"></div> Loading…</div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-head-bar">
+            <h3>Store Breakdown</h3>
+            <span class="badge" id="tableCount">Performance</span>
+          </div>
+          <div class="tscroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Store</th><th>Total</th><th>Open</th><th>Cancel</th>
+                  <th>FFO %</th><th>OTI</th><th>ITR</th><th>OTD</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody">
+                <tr><td colspan="8"><div class="loading"><div class="spinner"></div> Loading…</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
 </div>
+
+<div class="toast" id="toast">✓ Report submitted</div>
 
 <script>
-    // 🔗 Updated with your new Apps Script URL
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbyXVJ9a3PW6dX3OinkK2ntJpKPsX3m3_zo_pD6p-FF6mlbJ6BYytncBlq8qcbYAV9WJ/exec';
-    
-    function showTab(id) {
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        document.getElementById(`btn-${id === 'db' ? 'today' : 'form'}`).classList.add('active');
-        if(id === 'db') loadDashboard();
-    }
+const API = "https://script.google.com/macros/s/AKfycbyG9EJNzonUT15CrbhPtCZuYPdR0e86sVQa6fi82JjN6oBbDW56IVR5TlmjIq7NKJm8/exec";
+let allData = [];
+const stores = [
+  "TM6N","TM4T","TM6M","T9W3","T9T3","T9V5","T3GC","TM6O","T9T7",
+  "TM4Z","TM3J","TM5C","TN1B","TK5T","TN1T","T9H8","TM8T","TN1C",
+  "TBAE","U2JH","U1WR","U949","FRVE","U286","U1WP","2314","3035",
+  "3087","F1ZP","U1L2","U14V","TNI6","U086","U1OW","TKM7"
+];
+const slots = [[8,10],[10,12],[12,14],[14,16],[16,18],[18,20],[20,22]];
+let idx = 0;
 
-    const getTimeBucket = (dateObj) => {
-        const hour = dateObj.getHours();
-        if (hour < 8) return "Before 8 AM";
-        if (hour >= 8 && hour < 10) return "8 AM - 10 AM";
-        if (hour >= 10 && hour < 12) return "10 AM - 12 PM";
-        if (hour >= 12 && hour < 15) return "12 PM - 3 PM";
-        if (hour >= 15 && hour < 18) return "3 PM - 6 PM";
-        return "After 6 PM";
+function setCurrentSlot() {
+  const h = new Date().getHours();
+  for (let i = 0; i < slots.length; i++) {
+    if (h >= slots[i][0] && h < slots[i][1]) { idx = i; return; }
+  }
+  idx = 0;
+}
+
+function showTab(tab, btn) {
+  document.querySelectorAll('.tab-view').forEach(t => t.classList.remove('show'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById(tab).classList.add('show');
+  btn.classList.add('active');
+  const map = {
+    formTab: ['Submit Report', 'Enter store metrics for the current slot'],
+    dashTab: ['Dashboard', 'Live view across all stores']
+  };
+  document.getElementById('pageTitle').textContent = map[tab][0];
+  document.getElementById('pageSub').textContent   = map[tab][1];
+  if (tab === 'dashTab') { setCurrentSlot(); allData = []; loadData(); }
+}
+
+function buildDots() {
+  document.getElementById('slotDots').innerHTML = slots.map((_,i) =>
+    `<div class="slot-dot ${i===idx?'active':''}" onclick="goSlot(${i})"></div>`
+  ).join('');
+}
+
+function goSlot(i)  { idx=i; renderDash(); }
+function prevSlot() { if(idx>0){ idx--; renderDash(); } }
+function nextSlot() { if(idx<slots.length-1){ idx++; renderDash(); } }
+
+function sec(h,m,s) { return +h*3600 + +m*60 + +s; }
+function fmt(s) { if(!s) return '—'; return Math.floor(s/60)+'m'; }
+
+function statusCls(v, type) {
+  if(!v) return '';
+  if(type==='ffo') return v>95  ? 'good':'bad';
+  if(type==='oti') return v<120 ? 'good':'bad';
+  if(type==='itr') return v<60  ? 'good':'bad';
+  if(type==='otd') return v<900 ? 'good':'bad';
+  return '';
+}
+
+document.getElementById('mainForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const g = id => document.getElementById(id);
+  const data = {
+    store:            g('store').value,
+    total_orders:     +g('total_orders').value     || null,
+    open_orders:      +g('open_orders').value      || null,
+    cancelled_orders: +g('cancelled_orders').value || null,
+    ffo:              +g('ffo').value              || null,
+    oti: sec(g('oti_h').value, g('oti_m').value, g('oti_s').value),
+    itr: sec(g('itr_h').value, g('itr_m').value, g('itr_s').value),
+    otd: sec(g('otd_h').value, g('otd_m').value, g('otd_s').value),
+  };
+  await fetch(API, { method:'POST', body:JSON.stringify(data) });
+  g('mainForm').reset();
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+});
+
+let fetching = false;
+async function loadData() {
+  if(fetching) return;
+  fetching = true;
+  try {
+    const text = await (await fetch(API)).text();
+    allData = JSON.parse(text);
+  } catch(err) { console.error(err); }
+  fetching = false;
+  renderDash();
+}
+
+function renderDash() {
+  if(!allData.length) return;
+  const [s,e] = slots[idx];
+  document.getElementById('slotLabel').textContent = `${s}:00 – ${e}:00`;
+  document.getElementById('prevBtn').disabled = idx===0;
+  document.getElementById('nextBtn').disabled = idx===slots.length-1;
+  buildDots();
+
+  const map = {};
+  allData.forEach(d => {
+    const h = new Date(d.timestamp.replace(' ','T')).getHours();
+    if(h>=s && h<e) {
+      if(!map[d.store]) map[d.store]={};
+      Object.keys(d).forEach(k => {
+        if(map[d.store][k]==null && d[k]!=null) map[d.store][k]=d[k];
+      });
+    }
+  });
+
+  let tot=0,open=0,cancel=0;
+  let fS=0,fC=0,oS=0,oC=0,iS=0,iC=0,dS=0,dC=0;
+  Object.values(map).forEach(i => {
+    if(i.total_orders)     tot    +=i.total_orders;
+    if(i.open_orders)      open   +=i.open_orders;
+    if(i.cancelled_orders) cancel +=i.cancelled_orders;
+    if(i.ffo){fS+=i.ffo;fC++;}
+    if(i.oti){oS+=i.oti;oC++;}
+    if(i.itr){iS+=i.itr;iC++;}
+    if(i.otd){dS+=i.otd;dC++;}
+  });
+
+  const aFfo=fC?fS/fC:null, aOti=oC?oS/oC:null, aItr=iC?iS/iC:null, aOtd=dC?dS/dC:null;
+
+  const kpis = [
+    {label:'Total Orders', val:tot||'—',  raw:null,  type:null},
+    {label:'Open Orders',  val:open||'—', raw:null,  type:null},
+    {label:'Cancelled',    val:cancel||'—',raw:null, type:null},
+    {label:'Avg FFO',  val:aFfo?aFfo.toFixed(1)+'%':'—', raw:aFfo, type:'ffo'},
+    {label:'Avg OTI',  val:aOti?fmt(aOti):'—', raw:aOti, type:'oti'},
+    {label:'Avg ITR',  val:aItr?fmt(aItr):'—', raw:aItr, type:'itr'},
+    {label:'Avg OTD',  val:aOtd?fmt(aOtd):'—', raw:aOtd, type:'otd'},
+  ];
+
+  document.getElementById('kpiContainer').innerHTML = kpis.map(k => {
+    const cls = k.type ? statusCls(k.raw, k.type) : '';
+    return `<div class="kpi-card ${cls?cls+'-card':''}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-val ${cls}">${k.val}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('tableBody').innerHTML = stores.map(store => {
+    const i = map[store]||{};
+    const cell = (v, type) => {
+      if(v==null) return `<span class="dim">—</span>`;
+      const cls = type ? statusCls(v,type) : '';
+      const disp = type==='ffo' ? v+'%' : (['oti','itr','otd'].includes(type) ? fmt(v) : v);
+      return cls ? `<span class="${cls}">${disp}</span>` : disp;
     };
+    return `<tr>
+      <td><span class="store-chip">${store}</span></td>
+      <td>${i.total_orders!=null?i.total_orders:'<span class="dim">—</span>'}</td>
+      <td>${i.open_orders!=null?i.open_orders:'<span class="dim">—</span>'}</td>
+      <td>${i.cancelled_orders!=null?i.cancelled_orders:'<span class="dim">—</span>'}</td>
+      <td>${cell(i.ffo,'ffo')}</td>
+      <td>${cell(i.oti,'oti')}</td>
+      <td>${cell(i.itr,'itr')}</td>
+      <td>${cell(i.otd,'otd')}</td>
+    </tr>`;
+  }).join('');
+}
 
-    async function loadDashboard() {
-        const container = document.getElementById('masterBody');
-        const exportBtn = document.getElementById('exportBtn');
-        
-        container.innerHTML = '<div class="empty-state">Fetching raw data from Google Sheets...</div>';
-        exportBtn.disabled = true;
+setCurrentSlot();
 
-        try {
-            // STEP 1: Fetch RAW data (with cache buster)
-            const res = await fetch(scriptURL + "?t=" + Date.now());
-            const rawData = await res.json();
-            
-            if (rawData.length <= 1) {
-                container.innerHTML = `<div class="empty-state">Database is completely empty.</div>`;
-                return;
-            }
-
-            // STEP 2: Convert Arrays to Objects using row 0 headers
-            const headers = rawData;
-            let allLogs = rawData.slice(1).map(row => {
-                let obj = {};
-                headers.forEach((header, index) => obj[header] = row[index]);
-                return obj;
-            });
-
-            // STEP 3: Sort Chronologically
-            allLogs.sort((a, b) => new Date(a.Timestamp) - new Date(b.Timestamp));
-
-            // STEP 4: Local Date Filtering
-            const today = new Date();
-            const todaysLogs = allLogs.filter(log => {
-                if (!log.Timestamp) return false;
-                const logDate = new Date(log.Timestamp);
-                return logDate.getDate() === today.getDate() &&
-                       logDate.getMonth() === today.getMonth() &&
-                       logDate.getFullYear() === today.getFullYear();
-            });
-
-            if (todaysLogs.length === 0) {
-                container.innerHTML = `<div class="empty-state">No metrics submitted for today (${today.toLocaleDateString()}) yet.</div>`;
-                return;
-            }
-
-            // STEP 5: Group by Store and Time Bucket
-            const storeDataGrouped = {};
-            const bucketOrder = ["Before 8 AM", "8 AM - 10 AM", "10 AM - 12 PM", "12 PM - 3 PM", "3 PM - 6 PM", "After 6 PM"];
-
-            todaysLogs.forEach(log => {
-                const submitDate = new Date(log.Timestamp);
-                const storeName = log.Store;
-                
-                if (!storeName) return;
-                if (!storeDataGrouped[storeName]) storeDataGrouped[storeName] = {};
-
-                const bucketName = getTimeBucket(submitDate);
-                storeDataGrouped[storeName][bucketName] = {
-                    data: log, // Storing the full mapped object
-                    exactTime: submitDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-                };
-            });
-
-            // STEP 6: Draw the UI
-            let htmlOutput = '';
-            for (const [store, buckets] of Object.entries(storeDataGrouped)) {
-                htmlOutput += `
-                    <div class="store-row">
-                        <div class="store-name-col"><h2>${store}</h2></div>
-                        <div class="cards-col">`;
-
-                bucketOrder.forEach(bucketKey => {
-                    if (buckets[bucketKey]) {
-                        const log = buckets[bucketKey].data;
-                        const exactTime = buckets[bucketKey].exactTime;
-                        
-                        htmlOutput += `
-                            <div class="time-card">
-                                <div class="card-header">
-                                    <span>${bucketKey}</span>
-                                    <span class="exact-time">${exactTime}</span>
-                                </div>
-                                <div class="card-body">
-                                    <div class="metric-row"><span class="metric-label">Total Orders</span> <span class="metric-value">${log['Total Orders'] || ''}</span></div>
-                                    <div class="metric-row"><span class="metric-label">Open Orders</span> <span class="metric-value">${log['Open Orders'] || ''}</span></div>
-                                    <div class="metric-row"><span class="metric-label">Cancelled</span> <span class="metric-value">${log['Cancelled Orders'] || ''}</span></div>
-                                    <div class="metric-row"><span class="metric-label">FFO</span> <span class="metric-value">${log['FFO'] || ''}</span></div>
-                                    <div class="metric-row"><span class="metric-label">OTI</span> <span class="metric-value">${log['OTI'] || ''}</span></div>
-                                    <div class="metric-row"><span class="metric-label">ITR</span> <span class="metric-value">${log['ITR'] || ''}</span></div>
-                                    <div class="metric-row"><span class="metric-label">OTD</span> <span class="metric-value">${log['OTD'] || ''}</span></div>
-                                </div>
-                            </div>`;
-                    }
-                });
-                htmlOutput += `</div></div>`; 
-            }
-
-            container.innerHTML = htmlOutput;
-            document.getElementById('exportTime').innerText = `Generated: ${today.toLocaleString()}`;
-            exportBtn.disabled = false;
-            
-        } catch(e) { 
-            container.innerHTML = '<div class="empty-state" style="color:red;">Error processing raw data. Check console.</div>'; 
-            console.error(e);
-        }
-    }
-
-    function exportDashboard() {
-        const area = document.getElementById('capture-area');
-        const btn = document.getElementById('exportBtn');
-        btn.innerText = "GENERATING HD IMAGE...";
-        btn.disabled = true;
-        
-        html2canvas(area, { scale: 2, useCORS: true, backgroundColor: "#f8fafc" }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = `Store_Cards_${new Date().toLocaleDateString()}.png`;
-            link.href = canvas.toDataURL("image/png", 1.0);
-            link.click();
-            btn.innerText = "📸 EXPORT DASHBOARD (PNG)";
-            btn.disabled = false;
-        });
-    }
-
-    document.getElementById('storeForm').addEventListener('submit', e => {
-        e.preventDefault();
-        const btn = document.getElementById('submitBtn');
-        btn.innerText = "Submitting Data..."; btn.disabled = true;
-        fetch(scriptURL, { method: 'POST', body: new FormData(e.target)})
-            .then(() => { alert("Success!"); e.target.reset(); btn.innerText = "SUBMIT METRICS"; btn.disabled = false; })
-            .catch(() => { alert("Error!"); btn.innerText = "SUBMIT METRICS"; btn.disabled = false; });
-    });
+setInterval(async () => {
+  if(!document.getElementById('dashTab').classList.contains('show')) return;
+  try { allData=await(await fetch(API)).json(); setCurrentSlot(); renderDash(); } catch(e){}
+}, 30000);
 </script>
 </body>
 </html>
