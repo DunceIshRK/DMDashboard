@@ -219,7 +219,7 @@
             transform: translateY(1px);
         }
 
-        /* Slot bar (dashboard) - Normal Flow */
+        /* Slot bar / Tool bar */
         .slot-bar {
             display: flex;
             align-items: center;
@@ -233,7 +233,6 @@
             box-shadow: var(--shadow-sm);
         }
 
-        /* Date Picker Styling */
         .date-input {
             padding: 8px 16px;
             border: 1.5px solid var(--primary-light);
@@ -313,7 +312,7 @@
             width: 20px;
         }
 
-        /* KPI cards - Normal Flow */
+        /* KPI cards */
         .kpi-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -354,14 +353,50 @@
         .kpi-val.good { color: var(--success); }
         .kpi-val.bad { color: var(--danger); }
 
-        /* Table wrapper - Internally scrollable */
+        /* Table Controls */
+        .table-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 0 4px;
+        }
+        
+        .filter-toggle {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 6px 14px;
+            border-radius: 40px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
+        }
+
+        .filter-toggle:hover {
+            background: var(--bg);
+        }
+
+        .filter-toggle input {
+            accent-color: var(--primary);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        /* Table wrapper */
         .table-wrapper {
             background: white;
             border-radius: 20px;
             border: 1px solid var(--border);
             overflow-x: auto;
             overflow-y: auto;
-            max-height: 65vh; /* Gives the table its own scrollbar */
+            max-height: 65vh; 
             box-shadow: var(--shadow-sm);
         }
 
@@ -381,8 +416,6 @@
             text-transform: uppercase;
             letter-spacing: 0.6px;
             color: var(--text-soft);
-            
-            /* Sticky Table Headings so you don't lose context inside the table */
             position: sticky;
             top: 0;
             z-index: 10;
@@ -400,13 +433,11 @@
             border-bottom: none;
         }
 
-        /* Top-Left Corner */
         .data-table th:first-child {
             left: 0;
             z-index: 12;
         }
 
-        /* Leftmost Store Column Sticky */
         .data-table td:first-child {
             text-align: left;
             font-weight: 700;
@@ -428,34 +459,9 @@
             font-family: monospace;
         }
 
-        .badge-success {
-            background: var(--success-bg);
-            color: var(--success);
-            font-weight: 700;
-            padding: 3px 10px;
-            border-radius: 30px;
-            font-size: 0.7rem;
+        .status-icon {
+            font-size: 1.1rem;
         }
-
-        .badge-danger {
-            background: var(--danger-bg);
-            color: var(--danger);
-            font-weight: 700;
-            padding: 3px 10px;
-            border-radius: 30px;
-            font-size: 0.7rem;
-        }
-
-        .store-name-mini {
-            font-size: 0.65rem;
-            color: var(--text-soft);
-            display: block;
-            margin-top: 3px;
-            font-weight: normal;
-        }
-
-        .good { color: var(--success) !important; font-weight: 800; }
-        .bad { color: var(--danger) !important; font-weight: 800; }
 
         /* loading */
         .loader {
@@ -515,7 +521,8 @@
     <!-- Tabs -->
     <div class="tabs">
         <button class="tab-btn active" id="tabFormBtn">📋 ENTRY FORM</button>
-        <button class="tab-btn" id="tabDashBtn">📊 DASHBOARD</button>
+        <button class="tab-btn" id="tabDashBtn">📊 SLOT DASHBOARD</button>
+        <button class="tab-btn" id="tabDailyBtn">📅 DAILY TRACKER</button>
     </div>
 
     <!-- Form Tab -->
@@ -587,7 +594,7 @@
         </div>
     </div>
 
-    <!-- Dashboard Tab -->
+    <!-- Slot Dashboard Tab -->
     <div id="dashTab" class="tab-content">
         <!-- slot controls with Date Filter -->
         <div class="slot-bar">
@@ -606,6 +613,15 @@
             <div class="loader"><div class="spinner"></div> loading KPIs...</div>
         </div>
 
+        <!-- Table Controls (Pending Filter) -->
+        <div class="table-controls">
+            <h4 style="color: var(--text-soft); font-size: 0.9rem; font-weight: 800; text-transform: uppercase;">Store Status Overview</h4>
+            <label class="filter-toggle">
+                <input type="checkbox" id="pendingFilterToggle">
+                Show Pending Only
+            </label>
+        </div>
+
         <!-- stores table card -->
         <div class="table-wrapper">
             <table class="data-table" id="storeTable">
@@ -616,6 +632,41 @@
                 </thead>
                 <tbody id="tableBody">
                     <tr><td colspan="8"><div class="loader"><div class="spinner"></div> Syncing data...</div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- NEW: Daily Tracker Tab -->
+    <div id="dailyTab" class="tab-content">
+        <div class="slot-bar" style="justify-content: space-between;">
+            <div style="display: flex; gap: 16px; align-items: center;">
+                <input type="date" id="dailyDateSelect" class="date-input">
+                <h4 style="color: var(--text-soft); font-size: 0.9rem; font-weight: 800; text-transform: uppercase; margin-left: 10px;">All-Day Completion Matrix</h4>
+            </div>
+            
+            <label class="filter-toggle">
+                <input type="checkbox" id="dailyPendingToggle">
+                Show Incomplete Stores Only
+            </label>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="data-table" id="dailyTable">
+                <thead>
+                    <tr>
+                        <th>Store</th>
+                        <th>8:00 - 10:00</th>
+                        <th>10:00 - 12:00</th>
+                        <th>12:00 - 14:00</th>
+                        <th>14:00 - 16:00</th>
+                        <th>16:00 - 18:00</th>
+                        <th>18:00 - 20:00</th>
+                        <th>20:00 - 22:00</th>
+                    </tr>
+                </thead>
+                <tbody id="dailyTableBody">
+                    <tr><td colspan="8"><div class="loader"><div class="spinner"></div> Syncing daily data...</div></td></tr>
                 </tbody>
             </table>
         </div>
@@ -634,13 +685,13 @@
     ];
     const SLOTS = [[8,10],[10,12],[12,14],[14,16],[16,18],[18,20],[20,22]];
     let currentSlotIdx = 0;
-    let allRecords = [];           // raw data from API
-    let isLoadingDashboard = false;
+    let allRecords = [];           
+    let isLoadingData = false;
 
     // helper: seconds from h/m/s
     function toSeconds(h,m,s) { return (parseInt(h)||0)*3600 + (parseInt(m)||0)*60 + (parseInt(s)||0); }
     
-    // helper: format seconds into MM:SS format, returns blank string if no data
+    // helper: format seconds into MM:SS format
     function formatMMSS(sec) { 
         if(sec === null || isNaN(sec)) return ""; 
         const m = Math.floor(sec / 60);
@@ -648,13 +699,16 @@
         return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; 
     }
 
-    // Set Date Filter to Today on load
+    // Set Date Filters to Today on load
     function setDefaultDate() {
         const today = new Date();
         const yyyy = today.getFullYear();
         const mm = String(today.getMonth() + 1).padStart(2, '0');
         const dd = String(today.getDate()).padStart(2, '0');
-        document.getElementById('dateSelect').value = `${yyyy}-${mm}-${dd}`;
+        const todayStr = `${yyyy}-${mm}-${dd}`;
+        
+        document.getElementById('dateSelect').value = todayStr;
+        document.getElementById('dailyDateSelect').value = todayStr;
     }
 
     // set initial slot based on current hour
@@ -678,7 +732,7 @@
                 if(!isNaN(idx)) { 
                     currentSlotIdx = idx; 
                     renderSlotControls(); 
-                    renderDashboardUI(); // Render instantly without fetching
+                    renderDashboardUI(); 
                 }
             });
         });
@@ -704,21 +758,17 @@
         }
     }
 
-    // Filter records by BOTH current date and current slot
+    // Filter records by BOTH current date and current slot (For Dash Tab)
     function filterRecordsBySlot(records, slotIdx) {
-        const selectedDate = document.getElementById('dateSelect').value; // format: 'YYYY-MM-DD'
+        const selectedDate = document.getElementById('dateSelect').value; 
         const [startH, endH] = SLOTS[slotIdx];
         
         return records.filter(rec => {
             if(!rec.timestamp) return false;
             
             let dateObj = new Date(rec.timestamp);
-            if(isNaN(dateObj.getTime())) {
-                // fallback: try to replace space
-                dateObj = new Date(rec.timestamp.replace(' ','T'));
-            }
+            if(isNaN(dateObj.getTime())) dateObj = new Date(rec.timestamp.replace(' ','T'));
 
-            // 1. Check Date Match
             const recYear = dateObj.getFullYear();
             const recMonth = String(dateObj.getMonth() + 1).padStart(2, '0');
             const recDay = String(dateObj.getDate()).padStart(2, '0');
@@ -726,7 +776,6 @@
             
             if(recordDateStr !== selectedDate) return false;
 
-            // 2. Check Time Slot Match
             const hour = dateObj.getHours();
             return hour >= startH && hour < endH;
         });
@@ -734,7 +783,7 @@
 
     // aggregate data per store for current slot
     function aggregateByStore(recordsInSlot) {
-        const storeMap = new Map(); // store -> aggregated values
+        const storeMap = new Map(); 
         for(const rec of recordsInSlot) {
             const store = rec.store;
             if(!store) continue;
@@ -757,13 +806,14 @@
         return storeMap;
     }
 
-    // compute global KPIs (slot aggregated)
+    // compute global KPIs
     function computeGlobalKpis(storeAggMap) {
         let totalOrd = 0, totalOpen = 0, totalCancel = 0;
         let ffoSum = 0, ffoCount = 0;
         let otiSum = 0, otiCount = 0;
         let itrSum = 0, itrCount = 0;
         let otdSum = 0, otdCount = 0;
+        
         for(const agg of storeAggMap.values()) {
             if(agg.total_orders) totalOrd += agg.total_orders;
             if(agg.open_orders) totalOpen += agg.open_orders;
@@ -786,14 +836,15 @@
 
     function statusClass(value, type) {
         if(value === null || value === undefined || value === "") return '';
+        if(type === 'pending') return value > 0 ? 'bad' : 'good'; 
         if(type === 'ffo') return value > 95 ? 'good' : (value < 85 ? 'bad' : '');
-        if(type === 'oti') return value < 7200 ? 'good' : 'bad';   // <2h good
-        if(type === 'itr') return value < 3600 ? 'good' : 'bad';   // <1h good
-        if(type === 'otd') return value < 10800 ? 'good' : 'bad';  // <3h good
+        if(type === 'oti') return value < 7200 ? 'good' : 'bad';   
+        if(type === 'itr') return value < 3600 ? 'good' : 'bad';   
+        if(type === 'otd') return value < 10800 ? 'good' : 'bad';  
         return '';
     }
 
-    // NEW FUNCTION: Purely renders the UI based on existing allRecords data (Instantaneous)
+    // --- RENDERING FOR TAB 2: SLOT DASHBOARD ---
     function renderDashboardUI() {
         if(!document.getElementById('dashTab').classList.contains('active')) return;
 
@@ -801,8 +852,10 @@
         const storeAgg = aggregateByStore(slotFiltered);
         const kpis = computeGlobalKpis(storeAgg);
         
-        // Render KPI grid - Replaced dashes with empty strings
+        const pendingCount = STORES_LIST.filter(storeCode => !storeAgg.has(storeCode)).length;
+        
         const kpiElements = [
+            { label: "Pending Stores", value: pendingCount, raw: pendingCount, type: "pending" },
             { label: "Total Orders", value: kpis.totalOrders || 0, raw: null, type: null },
             { label: "Open Orders", value: kpis.openOrders || 0, raw: null },
             { label: "Cancelled", value: kpis.cancelled || 0, raw: null },
@@ -811,16 +864,19 @@
             { label: "Avg ITR", value: kpis.avgItr ? formatMMSS(kpis.avgItr) : "", raw: kpis.avgItr, type: "itr" },
             { label: "Avg OTD", value: kpis.avgOtd ? formatMMSS(kpis.avgOtd) : "", raw: kpis.avgOtd, type: "otd" }
         ];
+        
         document.getElementById('kpiGrid').innerHTML = kpiElements.map(k => {
             const cls = k.type ? statusClass(k.raw, k.type) : '';
             return `<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-val ${cls}">${k.value}</div></div>`;
         }).join('');
         
-        // Build table rows
-        const rowsHtml = STORES_LIST.map(storeCode => {
+        const showPendingOnly = document.getElementById('pendingFilterToggle').checked;
+        
+        const rowsHtml = STORES_LIST.filter(storeCode => {
+            if (showPendingOnly) return !storeAgg.has(storeCode);
+            return true; 
+        }).map(storeCode => {
             const agg = storeAgg.get(storeCode) || {};
-            
-            // Check for both null and undefined properly
             const total = agg.total_orders != null ? agg.total_orders : '';
             const open = agg.open_orders != null ? agg.open_orders : '';
             const cancel = agg.cancelled_orders != null ? agg.cancelled_orders : '';
@@ -850,23 +906,117 @@
                         <td class="${otdClass}">${otdDisplay}</td>
                     </tr>`;
         }).join('');
-        document.getElementById('tableBody').innerHTML = rowsHtml || '<tr><td colspan="8">No data for this slot/date</td></tr>';
+        
+        if (rowsHtml === '') {
+             document.getElementById('tableBody').innerHTML = '<tr><td colspan="8" style="padding: 30px; color: var(--success); font-weight: bold;">🎉 All stores have submitted for this slot!</td></tr>';
+        } else {
+             document.getElementById('tableBody').innerHTML = rowsHtml;
+        }
     }
 
-    // FUNCTION: Fetches data, shows loading spinner, then calls render (Used on Tab switch)
-    async function loadDashboardData() {
-        if(!document.getElementById('dashTab').classList.contains('active')) return;
-        if(isLoadingDashboard) return;
+    // --- RENDERING FOR TAB 3: DAILY TRACKER ---
+    function renderDailyTrackerUI() {
+        if(!document.getElementById('dailyTab').classList.contains('active')) return;
+
+        const selectedDate = document.getElementById('dailyDateSelect').value;
+        const showPendingOnly = document.getElementById('dailyPendingToggle').checked;
+
+        // Figure out "Today" to handle future slots intelligently
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const isToday = (selectedDate === todayStr);
+        const currentHour = today.getHours();
+
+        // 1. Filter allRecords for the whole day
+        const dayRecords = allRecords.filter(rec => {
+            if(!rec.timestamp) return false;
+            let d = new Date(rec.timestamp);
+            if(isNaN(d.getTime())) d = new Date(rec.timestamp.replace(' ','T'));
+            
+            const recStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            return recStr === selectedDate;
+        });
+
+        // 2. Map Store -> Array of 7 booleans (one for each slot)
+        const storeDailyStatus = new Map();
+        STORES_LIST.forEach(store => storeDailyStatus.set(store, new Array(SLOTS.length).fill(false)));
+
+        // 3. Mark slots as TRUE if record exists
+        dayRecords.forEach(rec => {
+            const store = rec.store;
+            if(!store || !storeDailyStatus.has(store)) return;
+            
+            let d = new Date(rec.timestamp);
+            if(isNaN(d.getTime())) d = new Date(rec.timestamp.replace(' ','T'));
+            const hour = d.getHours();
+            
+            const slotIdx = SLOTS.findIndex(s => hour >= s[0] && hour < s[1]);
+            if(slotIdx !== -1) {
+                storeDailyStatus.get(store)[slotIdx] = true;
+            }
+        });
+
+        // 4. Build Table Rows
+        let rowsHtml = '';
+        STORES_LIST.forEach(store => {
+            const statuses = storeDailyStatus.get(store);
+            let missingPastOrCurrentSlots = 0;
+            let cellsHtml = '';
+
+            statuses.forEach((hasData, i) => {
+                const slotStart = SLOTS[i][0];
+                const isFutureSlot = (isToday && slotStart > currentHour);
+
+                if (hasData) {
+                    cellsHtml += `<td><span class="status-icon">✅</span></td>`;
+                } else if (isFutureSlot) {
+                    // It's empty, but the slot hasn't happened yet today
+                    cellsHtml += `<td><span class="status-icon" style="opacity: 0.5;">⏳</span></td>`;
+                } else {
+                    // It's empty, and the slot has already started or passed
+                    missingPastOrCurrentSlots++;
+                    cellsHtml += `<td><span class="status-icon">❌</span></td>`;
+                }
+            });
+
+            // If toggle is ON, hide stores that have 0 missing slots so far
+            if (showPendingOnly && missingPastOrCurrentSlots === 0) return;
+
+            rowsHtml += `<tr>
+                            <td><span class="badge-store">${store}</span></td>
+                            ${cellsHtml}
+                        </tr>`;
+        });
+
+        if (rowsHtml === '') {
+             document.getElementById('dailyTableBody').innerHTML = '<tr><td colspan="8" style="padding: 30px; color: var(--success); font-weight: bold;">🎉 All stores are perfectly up-to-date for this day!</td></tr>';
+        } else {
+             document.getElementById('dailyTableBody').innerHTML = rowsHtml;
+        }
+    }
+
+
+    // Master fetch & render router
+    async function loadAllData() {
+        if (isLoadingData) return;
+        isLoadingData = true;
         
-        isLoadingDashboard = true;
-        document.getElementById('kpiGrid').innerHTML = '<div class="loader"><div class="spinner"></div> refreshing KPIs...</div>';
-        document.getElementById('tableBody').innerHTML = '<tr><td colspan="8"><div class="loader"><div class="spinner"></div> loading stores...</div></td></tr>';
+        // Throw spinners into active tabs
+        if(document.getElementById('dashTab').classList.contains('active')) {
+            document.getElementById('kpiGrid').innerHTML = '<div class="loader"><div class="spinner"></div> refreshing KPIs...</div>';
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="8"><div class="loader"><div class="spinner"></div> loading stores...</div></td></tr>';
+        } else if (document.getElementById('dailyTab').classList.contains('active')) {
+            document.getElementById('dailyTableBody').innerHTML = '<tr><td colspan="8"><div class="loader"><div class="spinner"></div> syncing daily data...</div></td></tr>';
+        }
         
         const freshData = await fetchAllMetrics();
         if(freshData.length) allRecords = freshData;
         
-        renderDashboardUI();
-        isLoadingDashboard = false;
+        // Render whichever tab is visible
+        if(document.getElementById('dashTab').classList.contains('active')) renderDashboardUI();
+        if(document.getElementById('dailyTab').classList.contains('active')) renderDailyTrackerUI();
+        
+        isLoadingData = false;
     }
 
     // submit form
@@ -892,12 +1042,13 @@
                 setTimeout(() => toast.classList.remove('show'), 3000);
                 document.getElementById('metricsForm').reset();
                 
-                // Refresh dashboard data silently if visible
-                if(document.getElementById('dashTab').classList.contains('active')) {
-                    const freshData = await fetchAllMetrics();
-                    if(freshData.length) allRecords = freshData;
-                    renderDashboardUI();
-                }
+                // Refresh data silently
+                const freshData = await fetchAllMetrics();
+                if(freshData.length) allRecords = freshData;
+                
+                renderDashboardUI();
+                renderDailyTrackerUI();
+                
             } else throw new Error();
         } catch(error) {
             alert("Submission error, please check network");
@@ -908,45 +1059,63 @@
     function setupTabs() {
         const formBtn = document.getElementById('tabFormBtn');
         const dashBtn = document.getElementById('tabDashBtn');
+        const dailyBtn = document.getElementById('tabDailyBtn');
+        
         const formTab = document.getElementById('formTab');
         const dashTab = document.getElementById('dashTab');
+        const dailyTab = document.getElementById('dailyTab');
         
+        function clearActive() {
+            [formBtn, dashBtn, dailyBtn].forEach(b => b.classList.remove('active'));
+            [formTab, dashTab, dailyTab].forEach(t => t.classList.remove('active'));
+        }
+
         formBtn.addEventListener('click', () => {
+            clearActive();
             formBtn.classList.add('active');
-            dashBtn.classList.remove('active');
             formTab.classList.add('active');
-            dashTab.classList.remove('active');
         });
         
         dashBtn.addEventListener('click', async () => {
+            clearActive();
             dashBtn.classList.add('active');
-            formBtn.classList.remove('active');
             dashTab.classList.add('active');
-            formTab.classList.remove('active');
             setSlotByHour();
             renderSlotControls();
-            await loadDashboardData();
+            if (allRecords.length === 0) {
+                await loadAllData();
+            } else {
+                renderDashboardUI();
+            }
+        });
+
+        dailyBtn.addEventListener('click', async () => {
+            clearActive();
+            dailyBtn.classList.add('active');
+            dailyTab.classList.add('active');
+            if (allRecords.length === 0) {
+                await loadAllData();
+            } else {
+                renderDailyTrackerUI();
+            }
         });
     }
 
-    // Auto-refresh: Quietly check for changes without disturbing the UI
+    // Auto-refresh: Quietly check for changes
     let intervalId = null;
     function startAutoRefresh() {
         if(intervalId) clearInterval(intervalId);
         intervalId = setInterval(async () => {
-            if(document.getElementById('dashTab').classList.contains('active')) {
-                // Fetch silently in the background
+            if(document.getElementById('dashTab').classList.contains('active') || document.getElementById('dailyTab').classList.contains('active')) {
                 const freshData = await fetchAllMetrics();
-                
                 if(freshData.length) {
-                    // Compare the old data to the new data
                     const currentDataStr = JSON.stringify(allRecords);
                     const freshDataStr = JSON.stringify(freshData);
 
-                    // ONLY update the screen if the data actually changed
                     if(currentDataStr !== freshDataStr) {
                         allRecords = freshData;
-                        renderDashboardUI(); // Updates instantly, no loading spinners!
+                        renderDashboardUI(); 
+                        renderDailyTrackerUI();
                     }
                 }
             }
@@ -954,37 +1123,29 @@
     }
 
     async function init() {
-        setDefaultDate(); // Set date picker to today
+        setDefaultDate(); 
         setupTabs();
         document.getElementById('metricsForm').addEventListener('submit', submitMetrics);
         setSlotByHour();
         renderSlotControls();
         
-        // Listeners for slot and date changes
+        // Listeners for Tab 2 (Dash)
         document.getElementById('dateSelect').addEventListener('change', renderDashboardUI);
-        
+        document.getElementById('pendingFilterToggle').addEventListener('change', renderDashboardUI);
         document.getElementById('prevSlotBtn').addEventListener('click', () => { 
-            if(currentSlotIdx > 0) { 
-                currentSlotIdx--; 
-                renderSlotControls(); 
-                renderDashboardUI(); 
-            } 
+            if(currentSlotIdx > 0) { currentSlotIdx--; renderSlotControls(); renderDashboardUI(); } 
         });
         document.getElementById('nextSlotBtn').addEventListener('click', () => { 
-            if(currentSlotIdx < SLOTS.length-1) { 
-                currentSlotIdx++; 
-                renderSlotControls(); 
-                renderDashboardUI(); 
-            } 
+            if(currentSlotIdx < SLOTS.length-1) { currentSlotIdx++; renderSlotControls(); renderDashboardUI(); } 
         });
 
+        // Listeners for Tab 3 (Daily)
+        document.getElementById('dailyDateSelect').addEventListener('change', renderDailyTrackerUI);
+        document.getElementById('dailyPendingToggle').addEventListener('change', renderDailyTrackerUI);
+
         // Initial Data Fetch
-        allRecords = await fetchAllMetrics();
+        await loadAllData();
         startAutoRefresh();
-        
-        if(document.getElementById('dashTab').classList.contains('active')) {
-            renderDashboardUI();
-        }
     }
     init();
 </script>
