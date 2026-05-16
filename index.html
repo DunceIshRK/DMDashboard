@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>DM Dashboard · Store Operations</title>
+    <title>DM Dashboard · Store SLA Tracking</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
         :root {
@@ -130,7 +130,7 @@
                         <input type="number" id="otdS" placeholder="S" min="0" max="59">
                     </div>
                 </div>
-                <button type="submit" id="submitBtn" class="btn-submit" disabled>✓ SUBMIT METRICS →</button>
+                <button type="submit" id="submitBtn" class="btn-submit" disabled>✓ SUBMIT</button>
             </form>
         </div>
     </div>
@@ -216,6 +216,17 @@
     ];
     let currentSlotIdx = 0;
 
+    // Dashboard state for silent polling
+    let lastDashboardData = null;
+    let dashboardPollingInterval = null;
+
+    // Colour thresholds for time metrics (in seconds)
+    const THRESHOLDS = {
+        oti: 120,   // 2 minutes
+        itr: 60,   // 1 minute
+        otd: 600   // 10 minutes
+    };
+
     // ========== HELPER: time check for form ==========
     function getCurrentActiveSlot() {
         const now = new Date();
@@ -298,8 +309,20 @@
         }
     }
 
-    // ========== RENDER DASHBOARD ==========
-    async function renderDashboard() {
+    // ========== COLOUR HELPERS ==========
+    function getTimeClass(formattedTime, type) {
+        if (!formattedTime) return '';
+        const parts = formattedTime.split(':');
+        if (parts.length !== 3) return '';
+        const seconds = (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2]);
+        if (type === 'oti' || type === 'itr' || type === 'otd') {
+            return seconds < THRESHOLDS[type] ? 'good' : 'bad';
+        }
+        return '';
+    }
+
+    // ========== RENDER DASHBOARD (with silent option) ==========
+    async function renderDashboard(silent = false) {
         if (!document.getElementById('dashTab').classList.contains('active')) return;
         const date = document.getElementById('dateSelect').value;
         const storeFilter = document.getElementById('storeFilterSelect').value;
@@ -307,12 +330,26 @@
 
         toggleSlotBarVisibility();
 
-        document.getElementById('kpiGrid').innerHTML = '<div class="loader"><div class="spinner"></div> refreshing KPIs...</div>';
-        document.getElementById('tableBody').innerHTML = '<tr><td colspan="8"><div class="loader"><div class="spinner"></div> loading stores...</div></td></tr>';
+        if (!silent) {
+            document.getElementById('kpiGrid').innerHTML = '<div class="loader"><div class="spinner"></div> refreshing KPIs...</div>';
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="8"><div class="loader"><div class="spinner"></div> loading stores...</div></td></tr>';
+        }
 
         try {
+            const data = await fetchDashboard(date, currentSlotIdx, storeFilter === 'all' ? null : storeFilter);
+            // For silent refresh, compare with last fetched data to avoid DOM changes if identical
+            if (silent) {
+                const newDataStr = JSON.stringify(data);
+                if (lastDashboardData === newDataStr) {
+                    return; // No change, skip rendering completely
+                }
+                lastDashboardData = newDataStr;
+            } else {
+                lastDashboardData = JSON.stringify(data);
+            }
+
             if (storeFilter === 'all') {
-                const data = await fetchDashboard(date, currentSlotIdx);
+                // Global slot view
                 const kpis = data.kpis;
                 const pendingCount = STORES_LIST.length - data.stores.filter(s => s.total_orders != null).length;
                 document.getElementById('kpiGrid').innerHTML = [
@@ -321,9 +358,9 @@
                     { label: "Open Orders", value: kpis.openOrders || 0, cls: '' },
                     { label: "Cancelled", value: kpis.cancelledOrders || 0, cls: '' },
                     { label: "Avg FFO", value: kpis.avgFfo != null ? kpis.avgFfo.toFixed(1)+"%" : "", cls: kpis.avgFfo != null ? (kpis.avgFfo > 95 ? 'good' : (kpis.avgFfo < 85 ? 'bad' : '')) : '' },
-                    { label: "Avg OTI", value: kpis.avgOti ? kpis.avgOti : "", cls: '' },
-                    { label: "Avg ITR", value: kpis.avgItr ? kpis.avgItr : "", cls: '' },
-                    { label: "Avg OTD", value: kpis.avgOtd ? kpis.avgOtd : "", cls: '' }
+                    { label: "Avg OTI", value: kpis.avgOti || "", cls: getTimeClass(kpis.avgOti, 'oti') },
+                    { label: "Avg ITR", value: kpis.avgItr || "", cls: getTimeClass(kpis.avgItr, 'itr') },
+                    { label: "Avg OTD", value: kpis.avgOtd || "", cls: getTimeClass(kpis.avgOtd, 'otd') }
                 ].map(k => `<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-val ${k.cls}">${k.value}</div></div>`).join('');
 
                 document.getElementById('storeTableHead').innerHTML = '<tr><th>Store</th><th>Total</th><th>Open</th><th>Cancel</th><th>FFO %</th><th>OTI</th><th>ITR</th><th>OTD</th></tr>';
@@ -335,38 +372,52 @@
                     const itrDisplay = s.itr || "";
                     const otdDisplay = s.otd || "";
                     const ffoClass = s.ffo != null ? (s.ffo > 95 ? 'good' : (s.ffo < 85 ? 'bad' : '')) : '';
+                    const otiClass = getTimeClass(otiDisplay, 'oti');
+                    const itrClass = getTimeClass(itrDisplay, 'itr');
+                    const otdClass = getTimeClass(otdDisplay, 'otd');
                     return `<tr>
                         <td><span class="badge-store">${s.store}</span></td>
                         <td>${s.total_orders != null ? s.total_orders : ''}</td>
                         <td>${s.open_orders != null ? s.open_orders : ''}</td>
                         <td>${s.cancelled_orders != null ? s.cancelled_orders : ''}</td>
                         <td class="${ffoClass}">${ffoDisplay}</td>
-                        <td>${otiDisplay}</td>
-                        <td>${itrDisplay}</td>
-                        <td>${otdDisplay}</td>
+                        <td class="${otiClass}">${otiDisplay}</td>
+                        <td class="${itrClass}">${itrDisplay}</td>
+                        <td class="${otdClass}">${otdDisplay}</td>
                     </tr>`;
                 }).join('');
                 document.getElementById('tableBody').innerHTML = rowsHtml || '<tr><td colspan="8" style="padding:30px;color:var(--success)">🎉 All stores have submitted for this slot!</td></tr>';
             } else {
-                const data = await fetchDashboard(date, currentSlotIdx, storeFilter);
+                // Store‑specific breakdown
                 document.getElementById('kpiGrid').innerHTML = `<div class="kpi-card" style="grid-column:span 4"><div class="kpi-label">Store</div><div class="kpi-val" style="font-size:1.4rem">${data.store}</div></div>`;
                 document.getElementById('storeTableHead').innerHTML = '<tr><th>Slot</th><th>Total</th><th>Open</th><th>Cancel</th><th>FFO %</th><th>OTI</th><th>ITR</th><th>OTD</th></tr>';
-                const rowsHtml = data.slots.map(s => `
-                    <tr>
+                const rowsHtml = data.slots.map(s => {
+                    const ffoDisplay = s.ffo != null ? s.ffo.toFixed(1)+"%" : "";
+                    const otiDisplay = s.oti || "";
+                    const itrDisplay = s.itr || "";
+                    const otdDisplay = s.otd || "";
+                    const ffoClass = s.ffo != null ? (s.ffo > 95 ? 'good' : (s.ffo < 85 ? 'bad' : '')) : '';
+                    const otiClass = getTimeClass(otiDisplay, 'oti');
+                    const itrClass = getTimeClass(itrDisplay, 'itr');
+                    const otdClass = getTimeClass(otdDisplay, 'otd');
+                    return `<tr>
                         <td><span class="badge-store">${s.slotLabel}</span></td>
                         <td>${s.total_orders != null ? s.total_orders : ''}</td>
                         <td>${s.open_orders != null ? s.open_orders : ''}</td>
                         <td>${s.cancelled_orders != null ? s.cancelled_orders : ''}</td>
-                        <td>${s.ffo != null ? s.ffo.toFixed(1)+"%" : ''}</td>
-                        <td>${s.oti || ''}</td>
-                        <td>${s.itr || ''}</td>
-                        <td>${s.otd || ''}</td>
-                    </tr>`).join('');
+                        <td class="${ffoClass}">${ffoDisplay}</td>
+                        <td class="${otiClass}">${otiDisplay}</td>
+                        <td class="${itrClass}">${itrDisplay}</td>
+                        <td class="${otdClass}">${otdDisplay}</td>
+                    </tr>`;
+                }).join('');
                 document.getElementById('tableBody').innerHTML = rowsHtml || '<tr><td colspan="8" style="padding:30px;color:var(--text-soft)">No data for this store yet.</td></tr>';
             }
         } catch (err) {
             console.error(err);
-            document.getElementById('tableBody').innerHTML = '<tr><td colspan="8">Error loading data</td></tr>';
+            if (!silent) {
+                document.getElementById('tableBody').innerHTML = '<tr><td colspan="8">Error loading data</td></tr>';
+            }
         }
     }
 
@@ -385,6 +436,23 @@
             document.getElementById('dailyTableBody').innerHTML = rowsHtml || '<tr><td colspan="7" style="padding:30px;color:var(--success)">🎉 All stores are perfectly up-to-date!</td></tr>';
         } catch (err) {
             document.getElementById('dailyTableBody').innerHTML = '<tr><td colspan="7">Error loading daily data</td></tr>';
+        }
+    }
+
+    // ========== SILENT AUTO‑REFRESH FOR DASHBOARD ==========
+    function startDashboardPolling() {
+        stopDashboardPolling();
+        dashboardPollingInterval = setInterval(() => {
+            if (document.getElementById('dashTab').classList.contains('active')) {
+                renderDashboard(true); // silent refresh
+            }
+        }, 30000);
+    }
+
+    function stopDashboardPolling() {
+        if (dashboardPollingInterval) {
+            clearInterval(dashboardPollingInterval);
+            dashboardPollingInterval = null;
         }
     }
 
@@ -420,7 +488,10 @@
             setTimeout(() => document.getElementById('globalToast').classList.remove('show'), 3000);
             document.getElementById('metricsForm').reset();
             // Refresh open tabs instantly
-            if (document.getElementById('dashTab').classList.contains('active')) renderDashboard();
+            if (document.getElementById('dashTab').classList.contains('active')) {
+                lastDashboardData = null;
+                renderDashboard(false);
+            }
             if (document.getElementById('dailyTab').classList.contains('active')) renderDailyTracker();
         } catch (err) {
             alert("Submission error. Check console.");
@@ -439,9 +510,27 @@
             [formBtn, dashBtn, dailyBtn].forEach(b => b.classList.remove('active'));
             [formTab, dashTab, dailyTab].forEach(t => t.classList.remove('active'));
         }
-        formBtn.onclick = () => { clear(); formBtn.classList.add('active'); formTab.classList.add('active'); updateFormWindowUI(); };
-        dashBtn.onclick = () => { clear(); dashBtn.classList.add('active'); dashTab.classList.add('active'); renderDashboard(); };
-        dailyBtn.onclick = () => { clear(); dailyBtn.classList.add('active'); dailyTab.classList.add('active'); renderDailyTracker(); };
+        formBtn.onclick = () => { 
+            clear(); 
+            formBtn.classList.add('active'); 
+            formTab.classList.add('active'); 
+            updateFormWindowUI(); 
+            stopDashboardPolling();
+        };
+        dashBtn.onclick = () => { 
+            clear(); 
+            dashBtn.classList.add('active'); 
+            dashTab.classList.add('active'); 
+            renderDashboard(false); 
+            startDashboardPolling();
+        };
+        dailyBtn.onclick = () => { 
+            clear(); 
+            dailyBtn.classList.add('active'); 
+            dailyTab.classList.add('active'); 
+            renderDailyTracker(); 
+            stopDashboardPolling();
+        };
     }
 
     // ========== INITIALIZATION ==========
@@ -461,16 +550,17 @@
         setupTabs();
 
         document.getElementById('metricsForm').addEventListener('submit', submitMetrics);
-        document.getElementById('dateSelect').addEventListener('change', renderDashboard);
-        document.getElementById('pendingFilterToggle').addEventListener('change', renderDashboard);
+        document.getElementById('dateSelect').addEventListener('change', () => { lastDashboardData = null; renderDashboard(false); });
+        document.getElementById('pendingFilterToggle').addEventListener('change', () => { lastDashboardData = null; renderDashboard(false); });
         document.getElementById('storeFilterSelect').addEventListener('change', () => {
+            lastDashboardData = null;
             toggleSlotBarVisibility();
-            renderDashboard();
+            renderDashboard(false);
         });
         document.getElementById('dailyDateSelect').addEventListener('change', renderDailyTracker);
         document.getElementById('dailyPendingToggle').addEventListener('change', renderDailyTracker);
-        document.getElementById('prevSlotBtn').onclick = () => { if (currentSlotIdx > 0) { currentSlotIdx--; updateSlotUI(); renderDashboard(); } };
-        document.getElementById('nextSlotBtn').onclick = () => { if (currentSlotIdx < SLOTS.length-1) { currentSlotIdx++; updateSlotUI(); renderDashboard(); } };
+        document.getElementById('prevSlotBtn').onclick = () => { if (currentSlotIdx > 0) { currentSlotIdx--; updateSlotUI(); lastDashboardData = null; renderDashboard(false); } };
+        document.getElementById('nextSlotBtn').onclick = () => { if (currentSlotIdx < SLOTS.length-1) { currentSlotIdx++; updateSlotUI(); lastDashboardData = null; renderDashboard(false); } };
 
         updateFormWindowUI();
         setInterval(updateFormWindowUI, 60000);
