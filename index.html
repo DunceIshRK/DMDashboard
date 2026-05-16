@@ -4,516 +4,64 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>DM Dashboard · Store Operations</title>
-    <!-- Modern system fonts + smooth rendering -->
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --primary-light: #eff6ff;
-            --bg: #f8fafc;
-            --surface: #ffffff;
-            --text: #1e293b;
-            --text-muted: #475569;
-            --text-soft: #64748b;
-            --border: #e2e8f0;
-            --success: #166534;
-            --success-bg: #dcfce7;
-            --danger: #991b1b;
-            --danger-bg: #fee2e2;
-            --warning: #b45309;
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-            --radius-lg: 1rem;
-            --radius-md: 0.75rem;
+            --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #eff6ff;
+            --bg: #f8fafc; --surface: #ffffff; --text: #1e293b; --text-muted: #475569;
+            --text-soft: #64748b; --border: #e2e8f0; --success: #166534; --success-bg: #dcfce7;
+            --danger: #991b1b; --danger-bg: #fee2e2; --warning: #b45309;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+            --radius-lg: 1rem; --radius-md: 0.75rem;
         }
-
-        body {
-            background: var(--bg);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            color: var(--text);
-            padding: 20px 16px 32px;
-            min-height: 100vh;
-        }
-
-        /* Main container */
-        .app-container {
-            max-width: 1440px;
-            margin: 0 auto;
-        }
-
-        /* Tabs - Normal Flow (No longer sticky) */
-        .tabs {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 28px;
-            background: var(--bg);
-            padding: 4px 0 8px;
-            flex-wrap: wrap;
-        }
-
-        .tab-btn {
-            flex: 1;
-            min-width: 140px;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 40px;
-            background: #e2e8f0;
-            font-weight: 700;
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-family: inherit;
-            letter-spacing: 0.3px;
-        }
-
-        .tab-btn.active {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
-        }
-
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.2s ease;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px);}
-            to { opacity: 1; transform: translateY(0);}
-        }
-
-        /* Section cards */
-        .section-card {
-            background: var(--surface);
-            border-radius: var(--radius-lg);
-            padding: 1.5rem;
-            margin-bottom: 1.75rem;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border);
-            transition: box-shadow 0.2s;
-        }
-
-        .section-card:hover {
-            box-shadow: var(--shadow-md);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: baseline;
-            justify-content: space-between;
-            margin-bottom: 1.25rem;
-            border-bottom: 2px solid #f1f5f9;
-            padding-bottom: 0.6rem;
-        }
-
-        .card-header h3 {
-            font-size: 1.1rem;
-            font-weight: 800;
-            color: var(--primary);
-            letter-spacing: -0.2px;
-        }
-
-        .badge-deadline {
-            background: #fee2e2;
-            color: var(--danger);
-            font-size: 0.7rem;
-            font-weight: 800;
-            padding: 4px 12px;
-            border-radius: 40px;
-        }
-
-        /* Form grid layout */
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .field-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-        }
-
-        .field-group label {
-            font-weight: 700;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-soft);
-        }
-
-        .field-group input,
-        .field-group select {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1.5px solid var(--border);
-            border-radius: 12px;
-            font-size: 0.9rem;
-            background: white;
-            transition: all 0.18s;
-            font-family: inherit;
-        }
-
-        .field-group input:focus,
-        .field-group select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-        }
-
-        .inline-time {
-            display: flex;
-            gap: 12px;
-            background: #f9fafc;
-            padding: 8px 12px;
-            border-radius: 14px;
-            border: 1px solid var(--border);
-        }
-
-        .inline-time .field-group {
-            flex: 1;
-            margin-bottom: 0;
-        }
-
-        .divider-mini {
-            margin: 1rem 0 0.8rem;
-            border-top: 1px dashed var(--border);
-        }
-
-        .btn-submit {
-            width: 100%;
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 60px;
-            font-weight: 800;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: 0.2s;
-            margin-top: 0.5rem;
-            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
-        }
-
-        .btn-submit:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-        }
-
-        .btn-submit:active {
-            transform: translateY(1px);
-        }
-
-        /* Slot bar / Tool bar */
-        .slot-bar {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-            background: white;
-            padding: 12px 20px;
-            border-radius: 60px;
-            margin-bottom: 24px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .date-input {
-            padding: 8px 16px;
-            border: 1.5px solid var(--primary-light);
-            border-radius: 40px;
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: var(--primary-dark);
-            background: var(--primary-light);
-            outline: none;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.2s;
-        }
-
-        .date-input:focus, .date-input:hover {
-            border-color: var(--primary);
-            background: white;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-        }
-
-        .slot-divider {
-            width: 2px;
-            height: 24px;
-            background: var(--border);
-            margin: 0 4px;
-        }
-
-        .nav-arrow {
-            background: #f1f5f9;
-            border: none;
-            width: 38px;
-            height: 38px;
-            border-radius: 30px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: var(--text-muted);
-        }
-
-        .nav-arrow:hover:not(:disabled) {
-            background: var(--primary);
-            color: white;
-        }
-
-        .nav-arrow:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        .slot-label {
-            font-weight: 800;
-            font-size: 1.2rem;
-            background: var(--primary-light);
-            padding: 6px 20px;
-            border-radius: 40px;
-            color: var(--primary);
-        }
-
-        .slot-dots {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .slot-dot {
-            width: 8px;
-            height: 8px;
-            background: #cbd5e1;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .slot-dot.active {
-            background: var(--primary);
-            width: 20px;
-        }
-
-        /* KPI cards */
-        .kpi-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 16px;
-            margin-bottom: 28px;
-        }
-
-        .kpi-card {
-            background: white;
-            border-radius: 20px;
-            padding: 16px 14px;
-            border: 1px solid var(--border);
-            transition: all 0.2s;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .kpi-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .kpi-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            font-weight: 800;
-            letter-spacing: 0.6px;
-            color: var(--text-soft);
-            margin-bottom: 8px;
-        }
-
-        .kpi-val {
-            font-size: 1.8rem;
-            font-weight: 800;
-            line-height: 1.2;
-            color: var(--text);
-        }
-
-        .kpi-val.good { color: var(--success); }
-        .kpi-val.bad { color: var(--danger); }
-
-        /* Table Controls */
-        .table-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            padding: 0 4px;
-        }
-        
-        .filter-toggle {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--text);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: white;
-            padding: 6px 14px;
-            border-radius: 40px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
-            transition: all 0.2s;
-        }
-
-        .filter-toggle:hover {
-            background: var(--bg);
-        }
-
-        .filter-toggle input {
-            accent-color: var(--primary);
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-        }
-
-        /* Table wrapper */
-        .table-wrapper {
-            background: white;
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            overflow-x: auto;
-            overflow-y: auto;
-            max-height: 65vh; 
-            box-shadow: var(--shadow-sm);
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-            min-width: 680px;
-        }
-
-        .data-table th {
-            background: #f8fafc;
-            padding: 14px 12px;
-            text-align: center;
-            font-weight: 800;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            color: var(--text-soft);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            box-shadow: inset 0 -1.5px 0 var(--border);
-        }
-
-        .data-table td {
-            padding: 12px 10px;
-            text-align: center;
-            border-bottom: 1px solid #f1f5f9;
-            font-weight: 500;
-        }
-
-        .data-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .data-table th:first-child {
-            left: 0;
-            z-index: 12;
-        }
-
-        .data-table td:first-child {
-            text-align: left;
-            font-weight: 700;
-            position: sticky;
-            left: 0;
-            background: white;
-            z-index: 2;
-            box-shadow: 2px 0 4px rgba(0,0,0,0.02);
-        }
-
-        .badge-store {
-            display: inline-block;
-            background: var(--primary-light);
-            color: var(--primary);
-            padding: 5px 12px;
-            border-radius: 40px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            font-family: monospace;
-        }
-
-        .status-icon {
-            font-size: 1.1rem;
-        }
-
-        /* loading */
-        .loader {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 32px;
-            color: var(--text-soft);
-        }
-
-        .spinner {
-            width: 18px;
-            height: 18px;
-            border: 2px solid var(--border);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-        }
-
+        body { background: var(--bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--text); padding: 20px 16px 32px; min-height: 100vh; }
+        .app-container { max-width: 1440px; margin: 0 auto; }
+        .tabs { display: flex; gap: 12px; margin-bottom: 28px; flex-wrap: wrap; }
+        .tab-btn { flex: 1; min-width: 140px; padding: 12px 20px; border: none; border-radius: 40px; background: #e2e8f0; font-weight: 700; font-size: 0.95rem; color: var(--text-muted); cursor: pointer; transition: all 0.2s; font-family: inherit; letter-spacing: 0.3px; }
+        .tab-btn.active { background: var(--primary); color: white; box-shadow: 0 8px 18px rgba(37,99,235,0.25); }
+        .tab-content { display: none; animation: fadeIn 0.2s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px);} to { opacity: 1; transform: translateY(0);} }
+        .section-card { background: var(--surface); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1.75rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
+        .card-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.25rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.6rem; }
+        .card-header h3 { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+        .badge-deadline { background: #fee2e2; color: var(--danger); font-size: 0.7rem; font-weight: 800; padding: 4px 12px; border-radius: 40px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.2rem; }
+        .field-group { display: flex; flex-direction: column; gap: 0.4rem; }
+        .field-group label { font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-soft); }
+        .field-group input, .field-group select { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 0.9rem; background: white; font-family: inherit; }
+        .inline-time { display: flex; gap: 12px; background: #f9fafc; padding: 8px 12px; border-radius: 14px; border: 1px solid var(--border); }
+        .divider-mini { margin: 1rem 0 0.8rem; border-top: 1px dashed var(--border); }
+        .btn-submit { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 60px; font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-top: 0.5rem; box-shadow: 0 6px 14px rgba(37,99,235,0.25); }
+        .btn-submit:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+        .slot-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; background: white; padding: 12px 20px; border-radius: 60px; margin-bottom: 24px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+        .date-input { padding: 8px 16px; border: 1.5px solid var(--primary-light); border-radius: 40px; font-size: 0.95rem; font-weight: 700; color: var(--primary-dark); background: var(--primary-light); outline: none; cursor: pointer; font-family: inherit; }
+        .slot-divider { width: 2px; height: 24px; background: var(--border); margin: 0 4px; }
+        .nav-arrow { background: #f1f5f9; border: none; width: 38px; height: 38px; border-radius: 30px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: all 0.2s; color: var(--text-muted); }
+        .nav-arrow:hover:not(:disabled) { background: var(--primary); color: white; }
+        .nav-arrow:disabled { opacity: 0.4; cursor: not-allowed; }
+        .slot-label { font-weight: 800; font-size: 1.2rem; background: var(--primary-light); padding: 6px 20px; border-radius: 40px; color: var(--primary); }
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .kpi-card { background: white; border-radius: 20px; padding: 16px 14px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+        .kpi-label { font-size: 0.7rem; text-transform: uppercase; font-weight: 800; letter-spacing: 0.6px; color: var(--text-soft); margin-bottom: 8px; }
+        .kpi-val { font-size: 1.8rem; font-weight: 800; line-height: 1.2; color: var(--text); }
+        .kpi-val.good { color: var(--success); } .kpi-val.bad { color: var(--danger); }
+        .table-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .filter-toggle { font-size: 0.85rem; font-weight: 700; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 8px; background: white; padding: 6px 14px; border-radius: 40px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+        .table-wrapper { background: white; border-radius: 20px; border: 1px solid var(--border); overflow: auto; max-height: 65vh; box-shadow: var(--shadow-sm); }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 680px; }
+        .data-table th { background: #f8fafc; padding: 14px 12px; text-align: center; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-soft); position: sticky; top: 0; z-index: 10; }
+        .data-table td { padding: 12px 10px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 500; }
+        .badge-store { display: inline-block; background: var(--primary-light); color: var(--primary); padding: 5px 12px; border-radius: 40px; font-size: 0.75rem; font-weight: 700; font-family: monospace; }
+        .status-icon { font-size: 1.1rem; }
+        .loader { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 32px; color: var(--text-soft); }
+        .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Toast */
-        .toast-notify {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: #1e293b;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 60px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            transform: translateY(80px);
-            opacity: 0;
-            transition: 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-            z-index: 999;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-        }
-
-        .toast-notify.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        @media (max-width: 640px) {
-            body { padding: 12px; }
-            .kpi-val { font-size: 1.3rem; }
-            .slot-bar { border-radius: 30px; }
-            .form-grid { grid-template-columns: 1fr; }
-            .table-wrapper { max-height: 55vh; }
-        }
+        .toast-notify { position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: white; padding: 12px 24px; border-radius: 60px; font-weight: 600; font-size: 0.8rem; transform: translateY(80px); opacity: 0; transition: 0.25s cubic-bezier(0.2,0.9,0.4,1.1); z-index: 999; box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+        .toast-notify.show { transform: translateY(0); opacity: 1; }
+        @media (max-width: 640px) { body { padding: 12px; } .kpi-val { font-size: 1.3rem; } .slot-bar { border-radius: 30px; } .form-grid { grid-template-columns: 1fr; } .table-wrapper { max-height: 55vh; } }
     </style>
 </head>
 <body>
@@ -525,13 +73,14 @@
         <button class="tab-btn" id="tabDailyBtn">📅 DAILY TRACKER</button>
     </div>
 
-    <!-- Form Tab -->
+    <!-- FORM TAB -->
     <div id="formTab" class="tab-content active">
         <div class="section-card">
             <div class="card-header">
                 <h3>📌 Store Metrics Submission</h3>
-                <span class="badge-deadline">Real‑time update</span>
+                <span class="badge-deadline" id="windowBadge">⏳ Closed</span>
             </div>
+            <div id="submissionMessage" style="margin-bottom: 1rem; font-weight: 600; color: var(--danger);"></div>
             <form id="metricsForm">
                 <div class="form-grid">
                     <div class="field-group">
@@ -550,123 +99,98 @@
                         </select>
                     </div>
                 </div>
-
                 <div class="divider-mini"></div>
                 <div class="form-grid">
                     <div class="field-group"><label>📦 Total Orders</label><input type="number" id="totalOrders" placeholder="0"></div>
                     <div class="field-group"><label>🔄 Open Orders</label><input type="number" id="openOrders" placeholder="0"></div>
                     <div class="field-group"><label>❌ Cancelled</label><input type="number" id="cancelledOrders" placeholder="0"></div>
                 </div>
-
                 <div class="form-grid">
                     <div class="field-group"><label>📊 FFO (%)</label><input type="number" id="ffo" step="any" placeholder="e.g., 96.5"></div>
                 </div>
-
-                <!-- OTI / ITR / OTD with H/M/S -->
                 <div class="card-header" style="margin-top: 0.5rem;"><h3 style="font-size: 0.9rem;">⏱️ Time Metrics (HH:MM:SS)</h3></div>
-                
                 <div class="field-group"><label>🕒 OTI (Order → Invoice)</label>
                     <div class="inline-time">
-                        <div class="field-group"><label>H</label><input type="number" id="otiH" placeholder="0" min="0"></div>
-                        <div class="field-group"><label>M</label><input type="number" id="otiM" placeholder="0" min="0" max="59"></div>
-                        <div class="field-group"><label>S</label><input type="number" id="otiS" placeholder="0" min="0" max="59"></div>
+                        <input type="number" id="otiH" placeholder="H" min="0">
+                        <input type="number" id="otiM" placeholder="M" min="0" max="59">
+                        <input type="number" id="otiS" placeholder="S" min="0" max="59">
                     </div>
                 </div>
-
                 <div class="field-group"><label>🕒 ITR (Invoice → Rider)</label>
                     <div class="inline-time">
-                        <div class="field-group"><label>H</label><input type="number" id="itrH" placeholder="0" min="0"></div>
-                        <div class="field-group"><label>M</label><input type="number" id="itrM" placeholder="0" min="0" max="59"></div>
-                        <div class="field-group"><label>S</label><input type="number" id="itrS" placeholder="0" min="0" max="59"></div>
+                        <input type="number" id="itrH" placeholder="H" min="0">
+                        <input type="number" id="itrM" placeholder="M" min="0" max="59">
+                        <input type="number" id="itrS" placeholder="S" min="0" max="59">
                     </div>
                 </div>
-
                 <div class="field-group"><label>🕒 OTD (Order → Delivery)</label>
                     <div class="inline-time">
-                        <div class="field-group"><label>H</label><input type="number" id="otdH" placeholder="0" min="0"></div>
-                        <div class="field-group"><label>M</label><input type="number" id="otdM" placeholder="0" min="0" max="59"></div>
-                        <div class="field-group"><label>S</label><input type="number" id="otdS" placeholder="0" min="0" max="59"></div>
+                        <input type="number" id="otdH" placeholder="H" min="0">
+                        <input type="number" id="otdM" placeholder="M" min="0" max="59">
+                        <input type="number" id="otdS" placeholder="S" min="0" max="59">
                     </div>
                 </div>
-
-                <button type="submit" class="btn-submit">✓ SUBMIT METRICS →</button>
+                <button type="submit" id="submitBtn" class="btn-submit" disabled>✓ SUBMIT METRICS →</button>
             </form>
         </div>
     </div>
 
-    <!-- Slot Dashboard Tab -->
+    <!-- DASHBOARD TAB -->
     <div id="dashTab" class="tab-content">
-        <!-- slot controls with Date Filter -->
-        <div class="slot-bar">
-            <!-- Date Input -->
+        <!-- Slot bar: date picker always visible, slot navigation hidden for store view -->
+        <div id="slotBarContainer" class="slot-bar">
             <input type="date" id="dateSelect" class="date-input">
             <div class="slot-divider"></div>
-            
-            <button class="nav-arrow" id="prevSlotBtn">←</button>
-            <span class="slot-label" id="slotRangeLabel">—</span>
-            <div class="slot-dots" id="slotDotsContainer"></div>
-            <button class="nav-arrow" id="nextSlotBtn">→</button>
+            <div id="slotNavWrapper" style="display: flex; align-items: center; gap: 16px;">
+                <button class="nav-arrow" id="prevSlotBtn">←</button>
+                <span class="slot-label" id="slotRangeLabel">—</span>
+                <button class="nav-arrow" id="nextSlotBtn">→</button>
+            </div>
         </div>
-
-        <!-- KPI row -->
-        <div id="kpiGrid" class="kpi-row">
-            <div class="loader"><div class="spinner"></div> loading KPIs...</div>
-        </div>
-
-        <!-- Table Controls (Pending Filter) -->
-        <div class="table-controls">
-            <h4 style="color: var(--text-soft); font-size: 0.9rem; font-weight: 800; text-transform: uppercase;">Store Status Overview</h4>
+        <div id="kpiGrid" class="kpi-row"><div class="loader"><div class="spinner"></div> loading KPIs...</div></div>
+        <!-- Store filter -->
+        <div class="table-controls" style="margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <label for="storeFilterSelect" style="font-weight: 700; font-size: 0.85rem;">🏬 Store Filter:</label>
+                <select id="storeFilterSelect" style="padding: 8px 16px; border-radius: 40px; border: 1px solid var(--border); font-weight: 600;">
+                    <option value="all">All Stores</option>
+                </select>
+            </div>
             <label class="filter-toggle">
                 <input type="checkbox" id="pendingFilterToggle">
                 Show Pending Only
             </label>
         </div>
-
-        <!-- stores table card -->
-        <div class="table-wrapper">
+        <div class="table-wrapper" id="dashboardTableWrapper">
             <table class="data-table" id="storeTable">
-                <thead>
-                    <tr>
-                        <th>Store</th><th>Total</th><th>Open</th><th>Cancel</th><th>FFO %</th><th>OTI</th><th>ITR</th><th>OTD</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    <tr><td colspan="8"><div class="loader"><div class="spinner"></div> Syncing data...</div></td></tr>
-                </tbody>
+                <thead id="storeTableHead"></thead>
+                <tbody id="tableBody"><tr><td colspan="8"><div class="loader"><div class="spinner"></div> Syncing data...</div></td></tr></tbody>
             </table>
         </div>
     </div>
 
-    <!-- NEW: Daily Tracker Tab -->
+    <!-- DAILY TRACKER TAB -->
     <div id="dailyTab" class="tab-content">
         <div class="slot-bar" style="justify-content: space-between;">
             <div style="display: flex; gap: 16px; align-items: center;">
                 <input type="date" id="dailyDateSelect" class="date-input">
-                <h4 style="color: var(--text-soft); font-size: 0.9rem; font-weight: 800; text-transform: uppercase; margin-left: 10px;">All-Day Completion Matrix</h4>
+                <h4 style="color: var(--text-soft); font-size: 0.9rem; font-weight: 800;">All-Day Completion Matrix</h4>
             </div>
-            
             <label class="filter-toggle">
                 <input type="checkbox" id="dailyPendingToggle">
                 Show Incomplete Stores Only
             </label>
         </div>
-
         <div class="table-wrapper">
             <table class="data-table" id="dailyTable">
                 <thead>
                     <tr>
                         <th>Store</th>
-                        <th>8:00 - 10:00</th>
-                        <th>10:00 - 12:00</th>
-                        <th>12:00 - 14:00</th>
-                        <th>14:00 - 16:00</th>
-                        <th>16:00 - 18:00</th>
-                        <th>18:00 - 20:00</th>
-                        <th>20:00 - 22:00</th>
+                        <th>10:00</th><th>12:00</th><th>16:00</th><th>18:00</th><th>20:00</th><th>22:00</th>
                     </tr>
                 </thead>
                 <tbody id="dailyTableBody">
-                    <tr><td colspan="8"><div class="loader"><div class="spinner"></div> Syncing daily data...</div></td></tr>
+                    <tr><td colspan="7"><div class="loader"><div class="spinner"></div> Syncing daily data...</div></td></tr>
                 </tbody>
             </table>
         </div>
@@ -675,7 +199,6 @@
 <div id="globalToast" class="toast-notify">✓ Report submitted</div>
 
 <script>
-    // ---------- CONFIG ----------
     const API_URL = "https://script.google.com/macros/s/AKfycbyG9EJNzonUT15CrbhPtCZuYPdR0e86sVQa6fi82JjN6oBbDW56IVR5TlmjIq7NKJm8/exec";
     const STORES_LIST = [
         "TM6N","TM4T","TM6M","T9W3","T9T3","T9V5","T3GC","TM6O","T9T7",
@@ -683,470 +206,276 @@
         "TBAE","U2JH","U1WR","U949","FRVE","U286","U1WP","2314","3035",
         "3087","F1ZP","U1L2","U14V","TNI6","U086","U1OW","TKM7"
     ];
-    const SLOTS = [[8,10],[10,12],[12,14],[14,16],[16,18],[18,20],[20,22]];
+    const SLOTS = [
+        { hour: 10, label: '10:00 AM', startOffset: -10, endOffset: 20 },
+        { hour: 12, label: '12:00 PM', startOffset: -10, endOffset: 20 },
+        { hour: 16, label: '4:00 PM', startOffset: -10, endOffset: 20 },
+        { hour: 18, label: '6:00 PM', startOffset: -10, endOffset: 20 },
+        { hour: 20, label: '8:00 PM', startOffset: -10, endOffset: 20 },
+        { hour: 22, label: '10:00 PM', startOffset: -10, endOffset: 20 }
+    ];
     let currentSlotIdx = 0;
-    let allRecords = [];           
-    let isLoadingData = false;
 
-    // helper: seconds from h/m/s
-    function toSeconds(h,m,s) { return (parseInt(h)||0)*3600 + (parseInt(m)||0)*60 + (parseInt(s)||0); }
-    
-    // helper: format seconds into MM:SS format
-    function formatMMSS(sec) { 
-        if(sec === null || isNaN(sec)) return ""; 
-        const m = Math.floor(sec / 60);
-        const s = Math.floor(sec % 60);
-        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; 
+    // ========== HELPER: time check for form ==========
+    function getCurrentActiveSlot() {
+        const now = new Date();
+        const minutes = now.getHours() * 60 + now.getMinutes();
+        for (let i = 0; i < SLOTS.length; i++) {
+            const start = SLOTS[i].hour * 60 + SLOTS[i].startOffset;
+            const end = SLOTS[i].hour * 60 + SLOTS[i].endOffset;
+            if (minutes >= start && minutes < end) return SLOTS[i];
+        }
+        return null;
     }
 
-    // Set Date Filters to Today on load
-    function setDefaultDate() {
+    function setDefaultDates() {
         const today = new Date();
         const yyyy = today.getFullYear();
         const mm = String(today.getMonth() + 1).padStart(2, '0');
         const dd = String(today.getDate()).padStart(2, '0');
         const todayStr = `${yyyy}-${mm}-${dd}`;
-        
         document.getElementById('dateSelect').value = todayStr;
         document.getElementById('dailyDateSelect').value = todayStr;
     }
 
-    // set initial slot based on current hour
     function setSlotByHour() {
         const now = new Date().getHours();
         let found = 0;
-        for(let i=0; i<SLOTS.length; i++) {
-            if(now >= SLOTS[i][0] && now < SLOTS[i][1]) { found = i; break; }
+        for (let i = 0; i < SLOTS.length; i++) {
+            if (now >= SLOTS[i].hour) found = i;
+            else break;
         }
         currentSlotIdx = found;
     }
 
-    // render slot dots & labels
-    function renderSlotControls() {
-        const container = document.getElementById('slotDotsContainer');
-        if(!container) return;
-        container.innerHTML = SLOTS.map((_,i) => `<div class="slot-dot ${i===currentSlotIdx ? 'active' : ''}" data-slotidx="${i}"></div>`).join('');
-        document.querySelectorAll('.slot-dot').forEach(dot => {
-            dot.addEventListener('click', (e) => {
-                const idx = parseInt(e.currentTarget.dataset.slotidx);
-                if(!isNaN(idx)) { 
-                    currentSlotIdx = idx; 
-                    renderSlotControls(); 
-                    renderDashboardUI(); 
-                }
-            });
-        });
-        const [s,e] = SLOTS[currentSlotIdx];
-        document.getElementById('slotRangeLabel').innerText = `${s}:00 – ${e}:00`;
-        const prevBtn = document.getElementById('prevSlotBtn');
-        const nextBtn = document.getElementById('nextSlotBtn');
-        if(prevBtn) prevBtn.disabled = (currentSlotIdx === 0);
-        if(nextBtn) nextBtn.disabled = (currentSlotIdx === SLOTS.length-1);
+    // ========== FORM SUBMISSION WINDOW MANAGEMENT ==========
+    function updateFormWindowUI() {
+        const slot = getCurrentActiveSlot();
+        const badge = document.getElementById('windowBadge');
+        const msg = document.getElementById('submissionMessage');
+        const submitBtn = document.getElementById('submitBtn');
+        if (slot) {
+            const startMin = slot.hour * 60 + slot.startOffset;
+            const endMin = slot.hour * 60 + slot.endOffset;
+            const startStr = `${String(Math.floor(startMin/60)).padStart(2,'0')}:${String(startMin%60).padStart(2,'0')}`;
+            const endStr = `${String(Math.floor(endMin/60)).padStart(2,'0')}:${String(endMin%60).padStart(2,'0')}`;
+            badge.textContent = `🟢 Open: ${startStr}–${endStr}`;
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#166534';
+            msg.textContent = '';
+            submitBtn.disabled = false;
+        } else {
+            badge.textContent = '⏳ Closed';
+            badge.style.background = '#fee2e2';
+            badge.style.color = '#991b1b';
+            msg.textContent = 'Submissions only allowed during slot windows: 9:50–10:20, 11:50–12:20, 15:50–16:20, 17:50–18:20, 19:50–20:20, 21:50–22:20';
+            submitBtn.disabled = true;
+        }
     }
 
-    // fetch data from API
-    async function fetchAllMetrics() {
+    // ========== API FETCH WRAPPERS ==========
+    async function fetchDashboard(date, slotIdx, store = null) {
+        let url = `${API_URL}?action=dashboard&date=${date}&slot=${slotIdx}`;
+        if (store && store !== 'all') url += `&store=${store}`;
+        const resp = await fetch(url);
+        return await resp.json();
+    }
+
+    async function fetchDailyTracker(date, pendingOnly = false) {
+        let url = `${API_URL}?action=dailyTracker&date=${date}&pendingOnly=${pendingOnly}`;
+        const resp = await fetch(url);
+        return await resp.json();
+    }
+
+    // ========== TOGGLE SLOT NAV VISIBILITY ==========
+    function toggleSlotBarVisibility() {
+        const storeFilter = document.getElementById('storeFilterSelect').value;
+        const slotNav = document.getElementById('slotNavWrapper');
+        if (storeFilter === 'all') {
+            slotNav.style.display = 'flex';
+        } else {
+            slotNav.style.display = 'none';
+        }
+    }
+
+    // ========== RENDER DASHBOARD ==========
+    async function renderDashboard() {
+        if (!document.getElementById('dashTab').classList.contains('active')) return;
+        const date = document.getElementById('dateSelect').value;
+        const storeFilter = document.getElementById('storeFilterSelect').value;
+        const pendingOnly = document.getElementById('pendingFilterToggle').checked;
+
+        toggleSlotBarVisibility();
+
+        document.getElementById('kpiGrid').innerHTML = '<div class="loader"><div class="spinner"></div> refreshing KPIs...</div>';
+        document.getElementById('tableBody').innerHTML = '<tr><td colspan="8"><div class="loader"><div class="spinner"></div> loading stores...</div></td></tr>';
+
         try {
-            const response = await fetch(API_URL);
-            const raw = await response.text();
-            let data = [];
-            try { data = JSON.parse(raw); } catch(e) { console.warn("parse",e); data = []; }
-            return Array.isArray(data) ? data : [];
-        } catch(err) {
-            console.error("fetch error", err);
-            return [];
-        }
-    }
+            if (storeFilter === 'all') {
+                const data = await fetchDashboard(date, currentSlotIdx);
+                const kpis = data.kpis;
+                const pendingCount = STORES_LIST.length - data.stores.filter(s => s.total_orders != null).length;
+                document.getElementById('kpiGrid').innerHTML = [
+                    { label: "Pending Stores", value: pendingCount, cls: pendingCount > 0 ? 'bad' : 'good' },
+                    { label: "Total Orders", value: kpis.totalOrders || 0, cls: '' },
+                    { label: "Open Orders", value: kpis.openOrders || 0, cls: '' },
+                    { label: "Cancelled", value: kpis.cancelledOrders || 0, cls: '' },
+                    { label: "Avg FFO", value: kpis.avgFfo != null ? kpis.avgFfo.toFixed(1)+"%" : "", cls: kpis.avgFfo != null ? (kpis.avgFfo > 95 ? 'good' : (kpis.avgFfo < 85 ? 'bad' : '')) : '' },
+                    { label: "Avg OTI", value: kpis.avgOti ? kpis.avgOti : "", cls: '' },
+                    { label: "Avg ITR", value: kpis.avgItr ? kpis.avgItr : "", cls: '' },
+                    { label: "Avg OTD", value: kpis.avgOtd ? kpis.avgOtd : "", cls: '' }
+                ].map(k => `<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-val ${k.cls}">${k.value}</div></div>`).join('');
 
-    // Filter records by BOTH current date and current slot (For Dash Tab)
-    function filterRecordsBySlot(records, slotIdx) {
-        const selectedDate = document.getElementById('dateSelect').value; 
-        const [startH, endH] = SLOTS[slotIdx];
-        
-        return records.filter(rec => {
-            if(!rec.timestamp) return false;
-            
-            let dateObj = new Date(rec.timestamp);
-            if(isNaN(dateObj.getTime())) dateObj = new Date(rec.timestamp.replace(' ','T'));
-
-            const recYear = dateObj.getFullYear();
-            const recMonth = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const recDay = String(dateObj.getDate()).padStart(2, '0');
-            const recordDateStr = `${recYear}-${recMonth}-${recDay}`;
-            
-            if(recordDateStr !== selectedDate) return false;
-
-            const hour = dateObj.getHours();
-            return hour >= startH && hour < endH;
-        });
-    }
-
-    // aggregate data per store for current slot
-    function aggregateByStore(recordsInSlot) {
-        const storeMap = new Map(); 
-        for(const rec of recordsInSlot) {
-            const store = rec.store;
-            if(!store) continue;
-            if(!storeMap.has(store)) {
-                storeMap.set(store, {
-                    total_orders: null, open_orders: null, cancelled_orders: null, ffo: null,
-                    oti: null, itr: null, otd: null, countFFO:0, countOTI:0, countITR:0, countOTD:0
-                });
-            }
-            let agg = storeMap.get(store);
-            if(rec.total_orders !== undefined && rec.total_orders !== null) agg.total_orders = rec.total_orders;
-            if(rec.open_orders !== undefined && rec.open_orders !== null) agg.open_orders = rec.open_orders;
-            if(rec.cancelled_orders !== undefined && rec.cancelled_orders !== null) agg.cancelled_orders = rec.cancelled_orders;
-            
-            if(rec.ffo !== undefined && rec.ffo !== null) { agg.ffo = rec.ffo; agg.countFFO++; }
-            if(rec.oti !== undefined && rec.oti !== null) { agg.oti = rec.oti; agg.countOTI++; }
-            if(rec.itr !== undefined && rec.itr !== null) { agg.itr = rec.itr; agg.countITR++; }
-            if(rec.otd !== undefined && rec.otd !== null) { agg.otd = rec.otd; agg.countOTD++; }
-        }
-        return storeMap;
-    }
-
-    // compute global KPIs
-    function computeGlobalKpis(storeAggMap) {
-        let totalOrd = 0, totalOpen = 0, totalCancel = 0;
-        let ffoSum = 0, ffoCount = 0;
-        let otiSum = 0, otiCount = 0;
-        let itrSum = 0, itrCount = 0;
-        let otdSum = 0, otdCount = 0;
-        
-        for(const agg of storeAggMap.values()) {
-            if(agg.total_orders) totalOrd += agg.total_orders;
-            if(agg.open_orders) totalOpen += agg.open_orders;
-            if(agg.cancelled_orders) totalCancel += agg.cancelled_orders;
-            if(agg.ffo !== null && agg.ffo !== undefined) { ffoSum += agg.ffo; ffoCount++; }
-            if(agg.oti !== null) { otiSum += agg.oti; otiCount++; }
-            if(agg.itr !== null) { itrSum += agg.itr; itrCount++; }
-            if(agg.otd !== null) { otdSum += agg.otd; otdCount++; }
-        }
-        return {
-            totalOrders: totalOrd,
-            openOrders: totalOpen,
-            cancelled: totalCancel,
-            avgFfo: ffoCount ? (ffoSum/ffoCount) : null,
-            avgOti: otiCount ? (otiSum/otiCount) : null,
-            avgItr: itrCount ? (itrSum/itrCount) : null,
-            avgOtd: otdCount ? (otdSum/otdCount) : null,
-        };
-    }
-
-    function statusClass(value, type) {
-        if(value === null || value === undefined || value === "") return '';
-        if(type === 'pending') return value > 0 ? 'bad' : 'good'; 
-        if(type === 'ffo') return value > 95 ? 'good' : (value < 85 ? 'bad' : '');
-        if(type === 'oti') return value < 7200 ? 'good' : 'bad';   
-        if(type === 'itr') return value < 3600 ? 'good' : 'bad';   
-        if(type === 'otd') return value < 10800 ? 'good' : 'bad';  
-        return '';
-    }
-
-    // --- RENDERING FOR TAB 2: SLOT DASHBOARD ---
-    function renderDashboardUI() {
-        if(!document.getElementById('dashTab').classList.contains('active')) return;
-
-        const slotFiltered = filterRecordsBySlot(allRecords, currentSlotIdx);
-        const storeAgg = aggregateByStore(slotFiltered);
-        const kpis = computeGlobalKpis(storeAgg);
-        
-        const pendingCount = STORES_LIST.filter(storeCode => !storeAgg.has(storeCode)).length;
-        
-        const kpiElements = [
-            { label: "Pending Stores", value: pendingCount, raw: pendingCount, type: "pending" },
-            { label: "Total Orders", value: kpis.totalOrders || 0, raw: null, type: null },
-            { label: "Open Orders", value: kpis.openOrders || 0, raw: null },
-            { label: "Cancelled", value: kpis.cancelled || 0, raw: null },
-            { label: "Avg FFO", value: kpis.avgFfo ? kpis.avgFfo.toFixed(1)+"%" : "", raw: kpis.avgFfo, type: "ffo" },
-            { label: "Avg OTI", value: kpis.avgOti ? formatMMSS(kpis.avgOti) : "", raw: kpis.avgOti, type: "oti" },
-            { label: "Avg ITR", value: kpis.avgItr ? formatMMSS(kpis.avgItr) : "", raw: kpis.avgItr, type: "itr" },
-            { label: "Avg OTD", value: kpis.avgOtd ? formatMMSS(kpis.avgOtd) : "", raw: kpis.avgOtd, type: "otd" }
-        ];
-        
-        document.getElementById('kpiGrid').innerHTML = kpiElements.map(k => {
-            const cls = k.type ? statusClass(k.raw, k.type) : '';
-            return `<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-val ${cls}">${k.value}</div></div>`;
-        }).join('');
-        
-        const showPendingOnly = document.getElementById('pendingFilterToggle').checked;
-        
-        const rowsHtml = STORES_LIST.filter(storeCode => {
-            if (showPendingOnly) return !storeAgg.has(storeCode);
-            return true; 
-        }).map(storeCode => {
-            const agg = storeAgg.get(storeCode) || {};
-            const total = agg.total_orders != null ? agg.total_orders : '';
-            const open = agg.open_orders != null ? agg.open_orders : '';
-            const cancel = agg.cancelled_orders != null ? agg.cancelled_orders : '';
-            let ffoVal = agg.ffo != null ? agg.ffo : null;
-            let otiVal = agg.oti || null;
-            let itrVal = agg.itr || null;
-            let otdVal = agg.otd || null;
-            
-            const ffoDisplay = ffoVal !== null ? ffoVal.toFixed(1)+"%" : "";
-            const otiDisplay = otiVal ? formatMMSS(otiVal) : "";
-            const itrDisplay = itrVal ? formatMMSS(itrVal) : "";
-            const otdDisplay = otdVal ? formatMMSS(otdVal) : "";
-            
-            const ffoClass = statusClass(ffoVal, 'ffo');
-            const otiClass = statusClass(otiVal, 'oti');
-            const itrClass = statusClass(itrVal, 'itr');
-            const otdClass = statusClass(otdVal, 'otd');
-            
-            return `<tr>
-                        <td><span class="badge-store">${storeCode}</span></td>
-                        <td>${total}</td>
-                        <td>${open}</td>
-                        <td>${cancel}</td>
+                document.getElementById('storeTableHead').innerHTML = '<tr><th>Store</th><th>Total</th><th>Open</th><th>Cancel</th><th>FFO %</th><th>OTI</th><th>ITR</th><th>OTD</th></tr>';
+                let stores = data.stores;
+                if (pendingOnly) stores = stores.filter(s => s.total_orders == null);
+                const rowsHtml = stores.map(s => {
+                    const ffoDisplay = s.ffo != null ? s.ffo.toFixed(1)+"%" : "";
+                    const otiDisplay = s.oti || "";
+                    const itrDisplay = s.itr || "";
+                    const otdDisplay = s.otd || "";
+                    const ffoClass = s.ffo != null ? (s.ffo > 95 ? 'good' : (s.ffo < 85 ? 'bad' : '')) : '';
+                    return `<tr>
+                        <td><span class="badge-store">${s.store}</span></td>
+                        <td>${s.total_orders != null ? s.total_orders : ''}</td>
+                        <td>${s.open_orders != null ? s.open_orders : ''}</td>
+                        <td>${s.cancelled_orders != null ? s.cancelled_orders : ''}</td>
                         <td class="${ffoClass}">${ffoDisplay}</td>
-                        <td class="${otiClass}">${otiDisplay}</td>
-                        <td class="${itrClass}">${itrDisplay}</td>
-                        <td class="${otdClass}">${otdDisplay}</td>
+                        <td>${otiDisplay}</td>
+                        <td>${itrDisplay}</td>
+                        <td>${otdDisplay}</td>
                     </tr>`;
-        }).join('');
-        
-        if (rowsHtml === '') {
-             document.getElementById('tableBody').innerHTML = '<tr><td colspan="8" style="padding: 30px; color: var(--success); font-weight: bold;">🎉 All stores have submitted for this slot!</td></tr>';
-        } else {
-             document.getElementById('tableBody').innerHTML = rowsHtml;
-        }
-    }
-
-    // --- RENDERING FOR TAB 3: DAILY TRACKER ---
-    function renderDailyTrackerUI() {
-        if(!document.getElementById('dailyTab').classList.contains('active')) return;
-
-        const selectedDate = document.getElementById('dailyDateSelect').value;
-        const showPendingOnly = document.getElementById('dailyPendingToggle').checked;
-
-        // Figure out "Today" to handle future slots intelligently
-        const today = new Date();
-        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        const isToday = (selectedDate === todayStr);
-        const currentHour = today.getHours();
-
-        // 1. Filter allRecords for the whole day
-        const dayRecords = allRecords.filter(rec => {
-            if(!rec.timestamp) return false;
-            let d = new Date(rec.timestamp);
-            if(isNaN(d.getTime())) d = new Date(rec.timestamp.replace(' ','T'));
-            
-            const recStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-            return recStr === selectedDate;
-        });
-
-        // 2. Map Store -> Array of 7 booleans (one for each slot)
-        const storeDailyStatus = new Map();
-        STORES_LIST.forEach(store => storeDailyStatus.set(store, new Array(SLOTS.length).fill(false)));
-
-        // 3. Mark slots as TRUE if record exists
-        dayRecords.forEach(rec => {
-            const store = rec.store;
-            if(!store || !storeDailyStatus.has(store)) return;
-            
-            let d = new Date(rec.timestamp);
-            if(isNaN(d.getTime())) d = new Date(rec.timestamp.replace(' ','T'));
-            const hour = d.getHours();
-            
-            const slotIdx = SLOTS.findIndex(s => hour >= s[0] && hour < s[1]);
-            if(slotIdx !== -1) {
-                storeDailyStatus.get(store)[slotIdx] = true;
+                }).join('');
+                document.getElementById('tableBody').innerHTML = rowsHtml || '<tr><td colspan="8" style="padding:30px;color:var(--success)">🎉 All stores have submitted for this slot!</td></tr>';
+            } else {
+                const data = await fetchDashboard(date, currentSlotIdx, storeFilter);
+                document.getElementById('kpiGrid').innerHTML = `<div class="kpi-card" style="grid-column:span 4"><div class="kpi-label">Store</div><div class="kpi-val" style="font-size:1.4rem">${data.store}</div></div>`;
+                document.getElementById('storeTableHead').innerHTML = '<tr><th>Slot</th><th>Total</th><th>Open</th><th>Cancel</th><th>FFO %</th><th>OTI</th><th>ITR</th><th>OTD</th></tr>';
+                const rowsHtml = data.slots.map(s => `
+                    <tr>
+                        <td><span class="badge-store">${s.slotLabel}</span></td>
+                        <td>${s.total_orders != null ? s.total_orders : ''}</td>
+                        <td>${s.open_orders != null ? s.open_orders : ''}</td>
+                        <td>${s.cancelled_orders != null ? s.cancelled_orders : ''}</td>
+                        <td>${s.ffo != null ? s.ffo.toFixed(1)+"%" : ''}</td>
+                        <td>${s.oti || ''}</td>
+                        <td>${s.itr || ''}</td>
+                        <td>${s.otd || ''}</td>
+                    </tr>`).join('');
+                document.getElementById('tableBody').innerHTML = rowsHtml || '<tr><td colspan="8" style="padding:30px;color:var(--text-soft)">No data for this store yet.</td></tr>';
             }
-        });
-
-        // 4. Build Table Rows
-        let rowsHtml = '';
-        STORES_LIST.forEach(store => {
-            const statuses = storeDailyStatus.get(store);
-            let missingPastOrCurrentSlots = 0;
-            let cellsHtml = '';
-
-            statuses.forEach((hasData, i) => {
-                const slotStart = SLOTS[i][0];
-                const isFutureSlot = (isToday && slotStart > currentHour);
-
-                if (hasData) {
-                    cellsHtml += `<td><span class="status-icon">✅</span></td>`;
-                } else if (isFutureSlot) {
-                    // It's empty, but the slot hasn't happened yet today
-                    cellsHtml += `<td><span class="status-icon" style="opacity: 0.5;">⏳</span></td>`;
-                } else {
-                    // It's empty, and the slot has already started or passed
-                    missingPastOrCurrentSlots++;
-                    cellsHtml += `<td><span class="status-icon">❌</span></td>`;
-                }
-            });
-
-            // If toggle is ON, hide stores that have 0 missing slots so far
-            if (showPendingOnly && missingPastOrCurrentSlots === 0) return;
-
-            rowsHtml += `<tr>
-                            <td><span class="badge-store">${store}</span></td>
-                            ${cellsHtml}
-                        </tr>`;
-        });
-
-        if (rowsHtml === '') {
-             document.getElementById('dailyTableBody').innerHTML = '<tr><td colspan="8" style="padding: 30px; color: var(--success); font-weight: bold;">🎉 All stores are perfectly up-to-date for this day!</td></tr>';
-        } else {
-             document.getElementById('dailyTableBody').innerHTML = rowsHtml;
+        } catch (err) {
+            console.error(err);
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="8">Error loading data</td></tr>';
         }
     }
 
-
-    // Master fetch & render router
-    async function loadAllData() {
-        if (isLoadingData) return;
-        isLoadingData = true;
-        
-        // Throw spinners into active tabs
-        if(document.getElementById('dashTab').classList.contains('active')) {
-            document.getElementById('kpiGrid').innerHTML = '<div class="loader"><div class="spinner"></div> refreshing KPIs...</div>';
-            document.getElementById('tableBody').innerHTML = '<tr><td colspan="8"><div class="loader"><div class="spinner"></div> loading stores...</div></td></tr>';
-        } else if (document.getElementById('dailyTab').classList.contains('active')) {
-            document.getElementById('dailyTableBody').innerHTML = '<tr><td colspan="8"><div class="loader"><div class="spinner"></div> syncing daily data...</div></td></tr>';
+    // ========== RENDER DAILY TRACKER ==========
+    async function renderDailyTracker() {
+        if (!document.getElementById('dailyTab').classList.contains('active')) return;
+        const date = document.getElementById('dailyDateSelect').value;
+        const pendingOnly = document.getElementById('dailyPendingToggle').checked;
+        document.getElementById('dailyTableBody').innerHTML = '<tr><td colspan="7"><div class="loader"><div class="spinner"></div> syncing daily data...</div></td></tr>';
+        try {
+            const data = await fetchDailyTracker(date, pendingOnly);
+            const rowsHtml = data.map(r => {
+                const cells = r.slots.map(val => `<td><span class="status-icon">${val ? '✅' : '❌'}</span></td>`).join('');
+                return `<tr><td><span class="badge-store">${r.store}</span></td>${cells}</tr>`;
+            }).join('');
+            document.getElementById('dailyTableBody').innerHTML = rowsHtml || '<tr><td colspan="7" style="padding:30px;color:var(--success)">🎉 All stores are perfectly up-to-date!</td></tr>';
+        } catch (err) {
+            document.getElementById('dailyTableBody').innerHTML = '<tr><td colspan="7">Error loading daily data</td></tr>';
         }
-        
-        const freshData = await fetchAllMetrics();
-        if(freshData.length) allRecords = freshData;
-        
-        // Render whichever tab is visible
-        if(document.getElementById('dashTab').classList.contains('active')) renderDashboardUI();
-        if(document.getElementById('dailyTab').classList.contains('active')) renderDailyTrackerUI();
-        
-        isLoadingData = false;
     }
 
-    // submit form
-    async function submitMetrics(ev) {
-        ev.preventDefault();
+    // ========== SLOT NAVIGATION ==========
+    function updateSlotUI() {
+        document.getElementById('slotRangeLabel').innerText = SLOTS[currentSlotIdx].label;
+        document.getElementById('prevSlotBtn').disabled = currentSlotIdx === 0;
+        document.getElementById('nextSlotBtn').disabled = currentSlotIdx === SLOTS.length - 1;
+    }
+
+    // ========== FORM SUBMISSION ==========
+    async function submitMetrics(e) {
+        e.preventDefault();
         const store = document.getElementById('storeSelect').value;
-        if(!store) { alert("Please select a store"); return; }
+        if (!store) return alert("Select a store.");
         const total_orders = parseInt(document.getElementById('totalOrders').value) || null;
         const open_orders = parseInt(document.getElementById('openOrders').value) || null;
         const cancelled_orders = parseInt(document.getElementById('cancelledOrders').value) || null;
         const ffo = parseFloat(document.getElementById('ffo').value) || null;
-        const oti = toSeconds(document.getElementById('otiH').value, document.getElementById('otiM').value, document.getElementById('otiS').value);
-        const itr = toSeconds(document.getElementById('itrH').value, document.getElementById('itrM').value, document.getElementById('itrS').value);
-        const otd = toSeconds(document.getElementById('otdH').value, document.getElementById('otdM').value, document.getElementById('otdS').value);
-        
+        const oti = (parseInt(document.getElementById('otiH').value)||0)*3600 + (parseInt(document.getElementById('otiM').value)||0)*60 + (parseInt(document.getElementById('otiS').value)||0) || null;
+        const itr = (parseInt(document.getElementById('itrH').value)||0)*3600 + (parseInt(document.getElementById('itrM').value)||0)*60 + (parseInt(document.getElementById('itrS').value)||0) || null;
+        const otd = (parseInt(document.getElementById('otdH').value)||0)*3600 + (parseInt(document.getElementById('otdM').value)||0)*60 + (parseInt(document.getElementById('otdS').value)||0) || null;
         const payload = { store, total_orders, open_orders, cancelled_orders, ffo, oti, itr, otd };
         try {
-            const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-            if(response.ok) {
-                const toast = document.getElementById('globalToast');
-                toast.innerText = "✓ Report submitted for " + store;
-                toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 3000);
-                document.getElementById('metricsForm').reset();
-                
-                // Refresh data silently
-                const freshData = await fetchAllMetrics();
-                if(freshData.length) allRecords = freshData;
-                
-                renderDashboardUI();
-                renderDailyTrackerUI();
-                
-            } else throw new Error();
-        } catch(error) {
-            alert("Submission error, please check network");
+            const resp = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+            if (!resp.ok) throw new Error();
+            const json = await resp.json();
+            if (json.status === 'error') {
+                alert(json.message);
+                return;
+            }
+            document.getElementById('globalToast').classList.add('show');
+            setTimeout(() => document.getElementById('globalToast').classList.remove('show'), 3000);
+            document.getElementById('metricsForm').reset();
+            // Refresh open tabs instantly
+            if (document.getElementById('dashTab').classList.contains('active')) renderDashboard();
+            if (document.getElementById('dailyTab').classList.contains('active')) renderDailyTracker();
+        } catch (err) {
+            alert("Submission error. Check console.");
         }
     }
 
-    // tab switching logic
+    // ========== TAB SETUP ==========
     function setupTabs() {
         const formBtn = document.getElementById('tabFormBtn');
         const dashBtn = document.getElementById('tabDashBtn');
         const dailyBtn = document.getElementById('tabDailyBtn');
-        
         const formTab = document.getElementById('formTab');
         const dashTab = document.getElementById('dashTab');
         const dailyTab = document.getElementById('dailyTab');
-        
-        function clearActive() {
+        function clear() {
             [formBtn, dashBtn, dailyBtn].forEach(b => b.classList.remove('active'));
             [formTab, dashTab, dailyTab].forEach(t => t.classList.remove('active'));
         }
-
-        formBtn.addEventListener('click', () => {
-            clearActive();
-            formBtn.classList.add('active');
-            formTab.classList.add('active');
-        });
-        
-        dashBtn.addEventListener('click', async () => {
-            clearActive();
-            dashBtn.classList.add('active');
-            dashTab.classList.add('active');
-            setSlotByHour();
-            renderSlotControls();
-            if (allRecords.length === 0) {
-                await loadAllData();
-            } else {
-                renderDashboardUI();
-            }
-        });
-
-        dailyBtn.addEventListener('click', async () => {
-            clearActive();
-            dailyBtn.classList.add('active');
-            dailyTab.classList.add('active');
-            if (allRecords.length === 0) {
-                await loadAllData();
-            } else {
-                renderDailyTrackerUI();
-            }
-        });
+        formBtn.onclick = () => { clear(); formBtn.classList.add('active'); formTab.classList.add('active'); updateFormWindowUI(); };
+        dashBtn.onclick = () => { clear(); dashBtn.classList.add('active'); dashTab.classList.add('active'); renderDashboard(); };
+        dailyBtn.onclick = () => { clear(); dailyBtn.classList.add('active'); dailyTab.classList.add('active'); renderDailyTracker(); };
     }
 
-    // Auto-refresh: Quietly check for changes
-    let intervalId = null;
-    function startAutoRefresh() {
-        if(intervalId) clearInterval(intervalId);
-        intervalId = setInterval(async () => {
-            if(document.getElementById('dashTab').classList.contains('active') || document.getElementById('dailyTab').classList.contains('active')) {
-                const freshData = await fetchAllMetrics();
-                if(freshData.length) {
-                    const currentDataStr = JSON.stringify(allRecords);
-                    const freshDataStr = JSON.stringify(freshData);
-
-                    if(currentDataStr !== freshDataStr) {
-                        allRecords = freshData;
-                        renderDashboardUI(); 
-                        renderDailyTrackerUI();
-                    }
-                }
-            }
-        }, 32000);
-    }
-
+    // ========== INITIALIZATION ==========
     async function init() {
-        setDefaultDate(); 
-        setupTabs();
-        document.getElementById('metricsForm').addEventListener('submit', submitMetrics);
+        setDefaultDates();
         setSlotByHour();
-        renderSlotControls();
-        
-        // Listeners for Tab 2 (Dash)
-        document.getElementById('dateSelect').addEventListener('change', renderDashboardUI);
-        document.getElementById('pendingFilterToggle').addEventListener('change', renderDashboardUI);
-        document.getElementById('prevSlotBtn').addEventListener('click', () => { 
-            if(currentSlotIdx > 0) { currentSlotIdx--; renderSlotControls(); renderDashboardUI(); } 
-        });
-        document.getElementById('nextSlotBtn').addEventListener('click', () => { 
-            if(currentSlotIdx < SLOTS.length-1) { currentSlotIdx++; renderSlotControls(); renderDashboardUI(); } 
+        updateSlotUI();
+
+        const storeFilter = document.getElementById('storeFilterSelect');
+        STORES_LIST.forEach(code => {
+            const opt = document.createElement('option');
+            opt.value = code;
+            opt.textContent = code;
+            storeFilter.appendChild(opt);
         });
 
-        // Listeners for Tab 3 (Daily)
-        document.getElementById('dailyDateSelect').addEventListener('change', renderDailyTrackerUI);
-        document.getElementById('dailyPendingToggle').addEventListener('change', renderDailyTrackerUI);
+        setupTabs();
 
-        // Initial Data Fetch
-        await loadAllData();
-        startAutoRefresh();
+        document.getElementById('metricsForm').addEventListener('submit', submitMetrics);
+        document.getElementById('dateSelect').addEventListener('change', renderDashboard);
+        document.getElementById('pendingFilterToggle').addEventListener('change', renderDashboard);
+        document.getElementById('storeFilterSelect').addEventListener('change', () => {
+            toggleSlotBarVisibility();
+            renderDashboard();
+        });
+        document.getElementById('dailyDateSelect').addEventListener('change', renderDailyTracker);
+        document.getElementById('dailyPendingToggle').addEventListener('change', renderDailyTracker);
+        document.getElementById('prevSlotBtn').onclick = () => { if (currentSlotIdx > 0) { currentSlotIdx--; updateSlotUI(); renderDashboard(); } };
+        document.getElementById('nextSlotBtn').onclick = () => { if (currentSlotIdx < SLOTS.length-1) { currentSlotIdx++; updateSlotUI(); renderDashboard(); } };
+
+        updateFormWindowUI();
+        setInterval(updateFormWindowUI, 60000);
     }
+
     init();
 </script>
 </body>
