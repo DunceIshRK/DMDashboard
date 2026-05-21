@@ -225,6 +225,7 @@
     let dashboardPollingInterval = null;
     const THRESHOLDS = { oti: 120, itr: 60, otd: 600 };
 
+    // Helper to determine if a slot is in the future for a given date
     function isSlotFuture(slotHour, dateStr) {
         const now = new Date();
         const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
@@ -232,6 +233,7 @@
         return now.getHours() < slotHour;
     }
 
+    // ========== HELPER: time check for form ==========
     function getCurrentActiveSlot() {
         const now = new Date();
         const minutes = now.getHours() * 60 + now.getMinutes();
@@ -277,7 +279,12 @@
             badge.style.background = '#dcfce7';
             badge.style.color = '#166534';
             msg.textContent = '';
-            submitBtn.disabled = false;
+            // Only enable if not already disabled by an ongoing submission
+            if (!submitBtn.disabled || submitBtn.dataset.submitting === 'true') {
+                // If it was disabled by submission, leave it disabled.
+            } else {
+                submitBtn.disabled = false;
+            }
         } else {
             badge.textContent = '⏳ Closed';
             badge.style.background = '#fee2e2';
@@ -294,6 +301,7 @@
         return await resp.json();
     }
 
+    // Always fetch all stores; filtering done in frontend
     async function fetchDailyTracker(date) {
         let url = `${API_URL}?action=dailyTracker&date=${date}&pendingOnly=false`;
         const resp = await fetch(url);
@@ -308,11 +316,10 @@
     }
 
     function getTimeClass(formattedTime, type) {
-        if (!formattedTime || typeof formattedTime !== 'string') return '';
+        if (!formattedTime) return '';
         const parts = formattedTime.split(':');
         if (parts.length !== 3) return '';
         const seconds = (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2]);
-        if (isNaN(seconds)) return '';
         if (type === 'oti' || type === 'itr' || type === 'otd') {
             return seconds < THRESHOLDS[type] ? 'good' : 'bad';
         }
@@ -350,7 +357,7 @@
                     { label: "Total Orders", value: kpis.totalOrders || 0, cls: '' },
                     { label: "Open Orders", value: kpis.openOrders || 0, cls: '' },
                     { label: "Cancelled", value: kpis.cancelledOrders || 0, cls: '' },
-                    { label: "Avg FFO", value: kpis.avgFfo != null ? Number(kpis.avgFfo).toFixed(1)+"%" : "", cls: kpis.avgFfo != null ? (kpis.avgFfo > 95 ? 'good' : (kpis.avgFfo < 85 ? 'bad' : '')) : '' },
+                    { label: "Avg FFO", value: kpis.avgFfo != null ? kpis.avgFfo.toFixed(1)+"%" : "", cls: kpis.avgFfo != null ? (kpis.avgFfo > 95 ? 'good' : (kpis.avgFfo < 85 ? 'bad' : '')) : '' },
                     { label: "Avg OTI", value: kpis.avgOti || "", cls: getTimeClass(kpis.avgOti, 'oti') },
                     { label: "Avg ITR", value: kpis.avgItr || "", cls: getTimeClass(kpis.avgItr, 'itr') },
                     { label: "Avg OTD", value: kpis.avgOtd || "", cls: getTimeClass(kpis.avgOtd, 'otd') }
@@ -360,7 +367,7 @@
                 let stores = data.stores;
                 if (pendingOnly) stores = stores.filter(s => s.total_orders == null);
                 const rowsHtml = stores.map(s => {
-                    const ffoDisplay = s.ffo != null ? Number(s.ffo).toFixed(1)+"%" : "";
+                    const ffoDisplay = s.ffo != null ? s.ffo.toFixed(1)+"%" : "";
                     const otiDisplay = s.oti || "";
                     const itrDisplay = s.itr || "";
                     const otdDisplay = s.otd || "";
@@ -384,7 +391,7 @@
                 document.getElementById('kpiGrid').innerHTML = `<div class="kpi-card" style="grid-column:span 4"><div class="kpi-label">Store</div><div class="kpi-val" style="font-size:1.4rem">${data.store}</div></div>`;
                 document.getElementById('storeTableHead').innerHTML = '<tr><th>Slot</th><th>Total</th><th>Open</th><th>Cancel</th><th>FFO %</th><th>OTI</th><th>ITR</th><th>OTD</th></tr>';
                 const rowsHtml = data.slots.map(s => {
-                    const ffoDisplay = s.ffo != null ? Number(s.ffo).toFixed(1)+"%" : "";
+                    const ffoDisplay = s.ffo != null ? s.ffo.toFixed(1)+"%" : "";
                     const otiDisplay = s.oti || "";
                     const itrDisplay = s.itr || "";
                     const otdDisplay = s.otd || "";
@@ -411,6 +418,7 @@
         }
     }
 
+    // ========== RENDER DAILY TRACKER ==========
     async function renderDailyTracker() {
         if (!document.getElementById('dailyTab').classList.contains('active')) return;
         const date = document.getElementById('dailyDateSelect').value;
@@ -476,10 +484,29 @@
         document.getElementById('nextSlotBtn').disabled = currentSlotIdx === SLOTS.length - 1;
     }
 
+    // ========== FIXED SUBMIT FUNCTION ==========
     async function submitMetrics(e) {
         e.preventDefault();
+        const submitBtn = document.getElementById('submitBtn');
+        // Prevent double‑click
+        if (submitBtn.disabled) return;
+
+        // Disable immediately and show feedback
+        submitBtn.disabled = true;
+        submitBtn.dataset.submitting = 'true';
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = '⏳ Submitting…';
+
         const store = document.getElementById('storeSelect').value;
-        if (!store) return alert("Select a store.");
+        if (!store) {
+            alert("Select a store.");
+            // Re‑enable the button if the user didn't select a store
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+            delete submitBtn.dataset.submitting;
+            return;
+        }
+
         const total_orders = parseInt(document.getElementById('totalOrders').value) || null;
         const open_orders = parseInt(document.getElementById('openOrders').value) || null;
         const cancelled_orders = parseInt(document.getElementById('cancelledOrders').value) || null;
@@ -487,28 +514,54 @@
         const oti = (parseInt(document.getElementById('otiH').value)||0)*3600 + (parseInt(document.getElementById('otiM').value)||0)*60 + (parseInt(document.getElementById('otiS').value)||0) || null;
         const itr = (parseInt(document.getElementById('itrH').value)||0)*3600 + (parseInt(document.getElementById('itrM').value)||0)*60 + (parseInt(document.getElementById('itrS').value)||0) || null;
         const otd = (parseInt(document.getElementById('otdH').value)||0)*3600 + (parseInt(document.getElementById('otdM').value)||0)*60 + (parseInt(document.getElementById('otdS').value)||0) || null;
+
         const payload = { store, total_orders, open_orders, cancelled_orders, ffo, oti, itr, otd };
+
         try {
             const resp = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-            if (!resp.ok) throw new Error();
+            if (!resp.ok) throw new Error('Network error');
             const json = await resp.json();
             if (json.status === 'error') {
                 alert(json.message);
+                // Re‑enable button on validation error (e.g., outside window)
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+                delete submitBtn.dataset.submitting;
                 return;
             }
+
+            // Success
             document.getElementById('globalToast').classList.add('show');
             setTimeout(() => document.getElementById('globalToast').classList.remove('show'), 3000);
+
+            // Reset form
             document.getElementById('metricsForm').reset();
+            // Refresh dashboard / tracker if visible
             if (document.getElementById('dashTab').classList.contains('active')) {
                 lastDashboardData = null;
                 renderDashboard(false);
             }
             if (document.getElementById('dailyTab').classList.contains('active')) renderDailyTracker();
+
         } catch (err) {
             alert("Submission error. Check console.");
+        } finally {
+            // Re‑enable the button only if we are still inside a valid slot window
+            const currentSlot = getCurrentActiveSlot();
+            if (currentSlot) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+                delete submitBtn.dataset.submitting;
+            } else {
+                // If the window closed during submission, keep it disabled (updateFormWindowUI will handle next minute)
+                submitBtn.textContent = originalText;
+                delete submitBtn.dataset.submitting;
+                updateFormWindowUI(); // will disable it if needed
+            }
         }
     }
 
+    // ========== PNG EXPORT (full table) ==========
     async function exportToPNG(elementId, filename = 'dashboard.png') {
         const element = document.getElementById(elementId);
         if (!element) return;
