@@ -203,6 +203,7 @@
 </div>
 <div id="globalToast" class="toast-notify">✓ Report submitted</div>
 
+<!-- Keep the same HTML and CSS from your previous version -->
 <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyG9EJNzonUT15CrbhPtCZuYPdR0e86sVQa6fi82JjN6oBbDW56IVR5TlmjIq7NKJm8/exec";
     const STORES_LIST = [
@@ -224,7 +225,6 @@
     let dashboardPollingInterval = null;
     const THRESHOLDS = { oti: 120, itr: 60, otd: 600 };
 
-    // Helper to determine if a slot is in the future for a given date
     function isSlotFuture(slotHour, dateStr) {
         const now = new Date();
         const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
@@ -232,7 +232,6 @@
         return now.getHours() < slotHour;
     }
 
-    // ========== HELPER: time check for form ==========
     function getCurrentActiveSlot() {
         const now = new Date();
         const minutes = now.getHours() * 60 + now.getMinutes();
@@ -295,7 +294,6 @@
         return await resp.json();
     }
 
-    // Always fetch all stores; filtering done in frontend
     async function fetchDailyTracker(date) {
         let url = `${API_URL}?action=dailyTracker&date=${date}&pendingOnly=false`;
         const resp = await fetch(url);
@@ -310,10 +308,11 @@
     }
 
     function getTimeClass(formattedTime, type) {
-        if (!formattedTime) return '';
+        if (!formattedTime || typeof formattedTime !== 'string') return '';
         const parts = formattedTime.split(':');
         if (parts.length !== 3) return '';
         const seconds = (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2]);
+        if (isNaN(seconds)) return '';
         if (type === 'oti' || type === 'itr' || type === 'otd') {
             return seconds < THRESHOLDS[type] ? 'good' : 'bad';
         }
@@ -351,7 +350,7 @@
                     { label: "Total Orders", value: kpis.totalOrders || 0, cls: '' },
                     { label: "Open Orders", value: kpis.openOrders || 0, cls: '' },
                     { label: "Cancelled", value: kpis.cancelledOrders || 0, cls: '' },
-                    { label: "Avg FFO", value: kpis.avgFfo != null ? kpis.avgFfo.toFixed(1)+"%" : "", cls: kpis.avgFfo != null ? (kpis.avgFfo > 95 ? 'good' : (kpis.avgFfo < 85 ? 'bad' : '')) : '' },
+                    { label: "Avg FFO", value: kpis.avgFfo != null ? Number(kpis.avgFfo).toFixed(1)+"%" : "", cls: kpis.avgFfo != null ? (kpis.avgFfo > 95 ? 'good' : (kpis.avgFfo < 85 ? 'bad' : '')) : '' },
                     { label: "Avg OTI", value: kpis.avgOti || "", cls: getTimeClass(kpis.avgOti, 'oti') },
                     { label: "Avg ITR", value: kpis.avgItr || "", cls: getTimeClass(kpis.avgItr, 'itr') },
                     { label: "Avg OTD", value: kpis.avgOtd || "", cls: getTimeClass(kpis.avgOtd, 'otd') }
@@ -361,7 +360,7 @@
                 let stores = data.stores;
                 if (pendingOnly) stores = stores.filter(s => s.total_orders == null);
                 const rowsHtml = stores.map(s => {
-                    const ffoDisplay = s.ffo != null ? s.ffo.toFixed(1)+"%" : "";
+                    const ffoDisplay = s.ffo != null ? Number(s.ffo).toFixed(1)+"%" : "";
                     const otiDisplay = s.oti || "";
                     const itrDisplay = s.itr || "";
                     const otdDisplay = s.otd || "";
@@ -385,7 +384,7 @@
                 document.getElementById('kpiGrid').innerHTML = `<div class="kpi-card" style="grid-column:span 4"><div class="kpi-label">Store</div><div class="kpi-val" style="font-size:1.4rem">${data.store}</div></div>`;
                 document.getElementById('storeTableHead').innerHTML = '<tr><th>Slot</th><th>Total</th><th>Open</th><th>Cancel</th><th>FFO %</th><th>OTI</th><th>ITR</th><th>OTD</th></tr>';
                 const rowsHtml = data.slots.map(s => {
-                    const ffoDisplay = s.ffo != null ? s.ffo.toFixed(1)+"%" : "";
+                    const ffoDisplay = s.ffo != null ? Number(s.ffo).toFixed(1)+"%" : "";
                     const otiDisplay = s.oti || "";
                     const itrDisplay = s.itr || "";
                     const otdDisplay = s.otd || "";
@@ -412,16 +411,13 @@
         }
     }
 
-    // ========== RENDER DAILY TRACKER (fixed) ==========
     async function renderDailyTracker() {
         if (!document.getElementById('dailyTab').classList.contains('active')) return;
         const date = document.getElementById('dailyDateSelect').value;
         const pendingOnly = document.getElementById('dailyPendingToggle').checked;
         document.getElementById('dailyTableBody').innerHTML = '<tr><td colspan="7"><div class="loader"><div class="spinner"></div> syncing daily data...</div></td></tr>';
         try {
-            // Fetch all stores, we filter on frontend
             const data = await fetchDailyTracker(date);
-            // Process: compute pending only from past/current slots
             const processed = data.map(r => {
                 let completed = 0;
                 let totalPastSlots = 0;
@@ -436,13 +432,11 @@
                 return { ...r, pending, completed, totalPastSlots };
             });
 
-            // Filter if needed
             let filtered = processed;
             if (pendingOnly) {
                 filtered = processed.filter(r => r.pending > 0);
             }
 
-            // Sort: highest pending first
             filtered.sort((a, b) => b.pending - a.pending || a.store.localeCompare(b.store));
 
             const rowsHtml = filtered.map(r => {
@@ -515,7 +509,6 @@
         }
     }
 
-    // ========== PNG EXPORT (full table) ==========
     async function exportToPNG(elementId, filename = 'dashboard.png') {
         const element = document.getElementById(elementId);
         if (!element) return;
